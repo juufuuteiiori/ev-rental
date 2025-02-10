@@ -29,6 +29,10 @@
           <span class="content-long-caption">{{ item.longCaption }}</span>
         </div>
       </div>
+
+      <div class="button-container">
+        <el-button size="medium" @click="handleClick"> 探索心仪座驾 </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -57,23 +61,23 @@ export default {
       contentItems: [
         {
           imgSrc: require("@/assets/HomeView/HomePage1.png"),
-          shortCaption: "图片1",
-          longCaption: "这是图片1",
+          shortCaption: "智能出行体验",
+          longCaption: "智能导航与远程控制，让驾驶更便捷",
         },
         {
           imgSrc: require("@/assets/HomeView/HomePage1.png"),
-          shortCaption: "图片1",
-          longCaption: "这是图片1",
+          shortCaption: "高效充电网络",
+          longCaption: "覆盖广泛的充电设施，畅享无忧续航",
         },
         {
           imgSrc: require("@/assets/HomeView/HomePage1.png"),
-          shortCaption: "图片1",
-          longCaption: "这是图片1",
+          shortCaption: "灵活租售方案",
+          longCaption: "多种购车与租赁模式，满足个性化需求",
         },
         {
           imgSrc: require("@/assets/HomeView/HomePage1.png"),
-          shortCaption: "图片1",
-          longCaption: "这是图片1",
+          shortCaption: "智能安全系统",
+          longCaption: "高级驾驶辅助技术，全方位守护安全",
         },
       ],
     };
@@ -188,5 +192,26 @@ export default {
 .content-grid-item:hover .content-long-caption {
   font-size: 1.5vw;
   color: white;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10vh 0; /* 控制上下留白 */
+}
+
+.el-button {
+  font-size: 16px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  border: solid black !important;
+  color: black;
+}
+
+.el-button:hover {
+  transform: scale(1.05);
+  background: #409eff !important;
+  color: white !important;
 }
 </style>

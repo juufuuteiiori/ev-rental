@@ -1,6 +1,7 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 import HomeView from "@/views/HomeView.vue"; // 确保 HomeView.vue 放在 `src/views/` 目录下
+import ErrorPage from "@/views/ErrorPage.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -9,6 +10,11 @@ const routes = [
     path: "/",
     name: "HomeView",
     component: HomeView,
+  },
+  {
+    path: "/404",
+    name: "ErrorPage",
+    component: ErrorPage,
   },
 ]; // 定义路由规则
 
