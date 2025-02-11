@@ -82,6 +82,11 @@ export default {
       ],
     };
   },
+  methods: {
+    handleClick() {
+      this.$router.push("/404"); // 替换成你的目标路径
+    },
+  },
 };
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <header :class="{ scrolled: isScrolled }" class="navbar">
+  <header :class="['navbar', isTransparent ? 'transparent' : 'solid']">
     <div class="nav-container">
       <!-- Logo -->
       <div class="logo">EV Rental</div>
@@ -33,19 +33,36 @@ export default {
   name: "NavBar",
   data() {
     return {
-      isScrolled: false,
+      isTransparent: true,
       isLoggedIn: false, // 模拟登录状态，实际从 vuex 中得到
     };
   },
+  watch: {
+    // 监听路由变化
+    $route(to) {
+      this.updateNavbarStyle(to.path);
+    },
+  },
   mounted() {
+    this.updateNavbarStyle(this.$route.path);
     window.addEventListener("scroll", this.handleScroll);
   },
   beforeUnmount() {
     window.removeEventListener("scroll", this.handleScroll);
   },
   methods: {
+    updateNavbarStyle(path) {
+      if (path === "/") {
+        this.isTransparent = true; // 只有根路由才默认透明
+      } else {
+        this.isTransparent = false; // 其他路由直接变成白色
+      }
+    },
     handleScroll() {
-      this.isScrolled = window.scrollY > 50;
+      if (this.$route.path === "/") {
+        // 仅在根路由下监听滚动
+        this.isTransparent = window.scrollY < 50; // 例如滚动 50px 后变色
+      }
     },
     goToLogin() {
       this.$router.push("/login");
@@ -62,7 +79,6 @@ export default {
 </script>
 
 <style scoped>
-/* 初始状态（透明背景 + 白色字体） */
 .navbar {
   position: fixed;
   top: 0;
@@ -74,15 +90,17 @@ export default {
   justify-content: space-between;
   transition: all 0.3s ease-in-out;
   z-index: 1000;
+}
+
+.navbar.transparent {
   background: transparent;
   color: white;
 }
 
-/* 滚动后的状态（白色背景 + 黑色字体） */
-.navbar.scrolled {
+.navbar.solid {
   background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   color: black;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* 导航栏整体布局 */
@@ -116,7 +134,7 @@ export default {
   color: white; /* 访问过的链接不变为紫色 */
 }
 
-.navbar.scrolled .nav-item {
+.navbar.solid .nav-item {
   color: black;
 }
 
@@ -134,7 +152,7 @@ export default {
   transition: all 0.3s ease-in-out;
 }
 
-.navbar.scrolled .login-btn {
+.navbar.solid .login-btn {
   border-color: black;
   color: black;
 }
@@ -145,8 +163,11 @@ export default {
 
 /* 下拉菜单 */
 .user-menu {
+  margin-right: 5vw;
   display: flex;
   align-items: center;
+  justify-content: center;
+  max-width: 100%; /* 限制宽度 */
 }
 
 .user-name {
