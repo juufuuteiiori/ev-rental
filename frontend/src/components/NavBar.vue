@@ -7,7 +7,7 @@
       <!-- 导航菜单 -->
       <nav class="nav-links">
         <router-link to="/" class="nav-item">首页</router-link>
-        <router-link to="/rental" class="nav-item">租赁车辆</router-link>
+        <router-link to="/cars" class="nav-item">租售车辆</router-link>
         <router-link to="/orders" class="nav-item">我的订单</router-link>
       </nav>
 
@@ -52,16 +52,15 @@ export default {
   },
   methods: {
     updateNavbarStyle(path) {
-      if (path === "/") {
-        this.isTransparent = true; // 只有根路由才默认透明
+      if ((path === "/") | (path === "/cars")) {
+        this.isTransparent = true;
       } else {
         this.isTransparent = false; // 其他路由直接变成白色
       }
     },
     handleScroll() {
-      if (this.$route.path === "/") {
-        // 仅在根路由下监听滚动
-        this.isTransparent = window.scrollY < 50; // 例如滚动 50px 后变色
+      if ((this.$route.path === "/") | (this.$route.path === "/cars")) {
+        this.isTransparent = window.scrollY < 50; // 滚动 50px 后变色
       }
     },
     goToLogin() {

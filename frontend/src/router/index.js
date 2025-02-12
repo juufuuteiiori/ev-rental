@@ -3,6 +3,7 @@ import VueRouter from "vue-router";
 import HomeView from "@/views/HomeView.vue"; // 确保 HomeView.vue 放在 `src/views/` 目录下
 import ErrorPage from "@/views/ErrorPage.vue";
 import LogIn from "@/views/LogIn.vue";
+import CarList from "@/views/CarList.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -21,6 +22,11 @@ const routes = [
     path: "/login",
     name: "LogIn",
     component: LogIn,
+  },
+  {
+    path: "/cars",
+    name: "CarList",
+    component: CarList,
   },
 ]; // 定义路由规则
 
