@@ -1,7 +1,11 @@
 <template>
   <div id="app">
     <NavBar />
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
     <FooterBar />
   </div>
 </template>

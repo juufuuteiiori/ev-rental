@@ -24,7 +24,7 @@
           <div class="content-image-container">
             <img :src="item.imgSrc" alt="" class="content-image" />
           </div>
-          <!-- <p class="content-caption">{{ item.caption }}</p> -->
+
           <span class="content-short-caption">{{ item.shortCaption }}</span>
           <span class="content-long-caption">{{ item.longCaption }}</span>
         </div>
@@ -84,7 +84,7 @@ export default {
   },
   methods: {
     handleClick() {
-      this.$router.push("/404"); // 替换成你的目标路径
+      this.$router.push("/cars");
     },
   },
 };

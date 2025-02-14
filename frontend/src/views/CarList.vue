@@ -30,7 +30,7 @@
               :key="brand"
               :label="brand"
               :value="brand"
-            ></el-option>
+            />
           </el-select>
         </el-col>
 
@@ -46,7 +46,7 @@
               :key="price.value"
               :label="price.label"
               :value="price.value"
-            ></el-option>
+            />
           </el-select>
         </el-col>
 
@@ -62,7 +62,7 @@
               :key="price.value"
               :label="price.label"
               :value="price.value"
-            ></el-option>
+            />
           </el-select>
         </el-col>
 
@@ -75,7 +75,7 @@
             @keyup.enter="fetchCars"
           >
             <template #append>
-              <el-button icon="el-icon-search" @click="fetchCars"></el-button>
+              <el-button icon="el-icon-search" @click="fetchCars" />
             </template>
           </el-input>
         </el-col>
@@ -84,42 +84,52 @@
 
     <!-- 车辆列表（表格） -->
     <div class="table-container">
-      <el-table :data="paginatedCars" stripe border @row-click="goToDetail">
+      <el-table
+        :data="paginatedCars"
+        stripe
+        border
+        style="width: 100%; min-height: 288px"
+        @row-click="goToDetail2"
+      >
         <el-table-column
           prop="brand"
           label="品牌"
           :flex-grow="1"
           align="center"
           header-align="center"
-        ></el-table-column>
+        />
+
         <el-table-column
           prop="name"
           label="车型"
           :flex-grow="2"
           align="center"
           header-align="center"
-        ></el-table-column>
+        />
+
         <el-table-column
           prop="range"
           label="续航（km）"
           :flex-grow="1"
           align="center"
           header-align="center"
-        ></el-table-column>
+        />
+
         <el-table-column
           prop="salePrice"
           label="销售价格（万元）"
           :flex-grow="1.5"
           align="center"
           header-align="center"
-        ></el-table-column>
+        />
+
         <el-table-column
           prop="rentalPrice"
           label="租赁价格（元/月）"
           :flex-grow="1.5"
           align="center"
           header-align="center"
-        ></el-table-column>
+        />
       </el-table>
     </div>
 
@@ -160,10 +170,11 @@ export default {
         },
         {
           id: 3,
-          name: "小鹏 P7",
+          brand: "蔚来",
+          name: "ES6",
           range: "562 km",
-          salePrice: "¥ 22.99 万起",
-          rentalPrice: "¥ 3800 每月起",
+          salePrice: "¥ 34.99 万起",
+          rentalPrice: "¥ 4500 每月起",
           imgSrc: require("@/assets/CarList/byd_sl.jpg"),
         },
       ],
@@ -196,7 +207,7 @@ export default {
           name: "Model 3",
           range: 600,
           rentalPrice: 4000,
-          salePrice: 30,
+          salePrice: 23.99,
         },
         {
           id: 2,
@@ -204,7 +215,7 @@ export default {
           name: "汉 EV",
           range: 550,
           rentalPrice: 3500,
-          salePrice: 22,
+          salePrice: 21.98,
         },
         {
           id: 3,
@@ -212,7 +223,7 @@ export default {
           name: "ES6",
           range: 580,
           rentalPrice: 4500,
-          salePrice: 35,
+          salePrice: 34.99,
         },
         {
           id: 4,
@@ -220,7 +231,7 @@ export default {
           name: "P7",
           range: 670,
           rentalPrice: 3700,
-          salePrice: 25,
+          salePrice: 24.98,
         },
         {
           id: 5,
@@ -228,7 +239,7 @@ export default {
           name: "P7",
           range: 670,
           rentalPrice: 3700,
-          salePrice: 25,
+          salePrice: 24.98,
         },
         {
           id: 6,
@@ -236,7 +247,7 @@ export default {
           name: "P7",
           range: 670,
           rentalPrice: 3700,
-          salePrice: 25,
+          salePrice: 24.98,
         },
       ],
       // 当前页码
@@ -244,6 +255,7 @@ export default {
       pageSize: 5, // 每页显示数量
     };
   },
+
   computed: {
     // 计算筛选后的车辆列表
     filteredCars() {
@@ -273,6 +285,20 @@ export default {
       );
     },
   },
+
+  created() {
+    // 从 sessionStorage 读取筛选条件
+    const savedFilters = sessionStorage.getItem("carListFilters");
+    if (savedFilters) {
+      this.filters = JSON.parse(savedFilters);
+    }
+  },
+
+  beforeUnmount() {
+    // 退出页面时，保存筛选条件
+    sessionStorage.setItem("carListFilters", JSON.stringify(this.filters));
+  },
+
   methods: {
     // 价格区间筛选逻辑
     isPriceInRange(price, range) {
@@ -285,7 +311,10 @@ export default {
       this.currentPage = 1; // 搜索时回到第一页
     },
     // 跳转车辆详情页
-    goToDetail(row) {
+    goToDetail(id) {
+      this.$router.push(`/car/${id}`);
+    },
+    goToDetail2(row) {
       this.$router.push(`/car/${row.id}`);
     },
     // 改变分页
