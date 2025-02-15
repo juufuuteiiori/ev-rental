@@ -5,6 +5,7 @@ import ErrorPage from "@/views/ErrorPage.vue";
 import LogIn from "@/views/LogIn.vue";
 import CarList from "@/views/CarList.vue";
 import CarDetail from "@/views/CarDetail.vue";
+import OrderPage from "@/views/OrderPage.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -33,6 +34,12 @@ const routes = [
     path: "/car/:id",
     name: "CarDetail",
     component: CarDetail,
+  },
+  {
+    path: "/order/:carId",
+    name: "OrderPage",
+    component: OrderPage,
+    props: true, // 允许通过 props 传递 carId
   },
 ]; // 定义路由规则
 

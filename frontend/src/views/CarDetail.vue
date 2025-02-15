@@ -134,6 +134,7 @@ export default {
       };
       radarChart.setOption(option);
     },
+
     renderLineChart() {
       const lineChart = echarts.init(this.$refs.lineChart);
 
@@ -181,6 +182,10 @@ export default {
       };
 
       lineChart.setOption(option);
+    },
+
+    handleBuy() {
+      this.$router.push(`/order/${this.car.model_id}`);
     },
   },
   mounted() {
