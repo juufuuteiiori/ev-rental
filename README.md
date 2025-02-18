@@ -2,7 +2,7 @@
 
 ## 前端
 
-项目中使用的 Vue 版本是 2.7.16，详细信息如下：
+项目中使用的 Vue 版本为 2.7.16，详细信息如下：
 
 ```cmd
 frontend@0.1.0 /home/iori/ev-rental/frontend
@@ -17,3 +17,9 @@ frontend@0.1.0 /home/iori/ev-rental/frontend
 └─┬ vuex@3.6.2
 └── vue@2.7.16 deduped
 ```
+
+## 后端
+
+cmake version 3.22.1
+
+## 数据库

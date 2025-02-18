@@ -1,0 +1,7 @@
+{
+  "host": "localhost",
+  "user": "root",
+  "password": "juufuuteiiori",
+  "database": "ev_rental_database",
+  "sql": "../database/database.sql"
+}
