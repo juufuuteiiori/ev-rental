@@ -11,8 +11,7 @@ include(FetchContent)
 FetchContent_Declare(
     crow
     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
-    GIT_TAG v1.0+3  # 确保所有开发人员使用相同的版本
-)
+    GIT_TAG v1.0+3)
 FetchContent_MakeAvailable(crow)
 include_directories(${crow_SOURCE_DIR}/include)
 
@@ -24,8 +23,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.2  # 确保所有开发人员使用相同的版本
-)
+    GIT_TAG v3.11.2)
 FetchContent_MakeAvailable(json)
 include_directories(${json_SOURCE_DIR}/single_include)
 
@@ -33,8 +31,12 @@ include_directories(${json_SOURCE_DIR}/single_include)
 include_directories("/usr/include/mysql")
 link_directories("/usr/lib/x86_64-linux-gnu")
 
+# 添加 include 目录
+include_directories(${CMAKE_SOURCE_DIR})
+
 # 编译主程序
-add_executable(server main.cpp database/db_init.cpp)
+add_executable(server main.cpp database/database.cpp server/crow_server.cpp
+                      server/handlers/vehicle_handler.cpp)
 
 # 链接所有库
 target_link_libraries(server ${Boost_LIBRARIES} mysqlclient)

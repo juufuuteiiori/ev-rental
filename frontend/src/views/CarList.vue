@@ -26,7 +26,7 @@
             class="custom-select"
           >
             <el-option
-              v-for="brand in brandOptions"
+              v-for="brand in this.brands"
               :key="brand"
               :label="brand"
               :value="brand"
@@ -100,7 +100,7 @@
         />
 
         <el-table-column
-          prop="name"
+          prop="model"
           label="车型"
           :flex-grow="2"
           align="center"
@@ -117,7 +117,7 @@
 
         <el-table-column
           prop="salePrice"
-          label="销售价格（万元）"
+          label="销售价格（元）"
           :flex-grow="1.5"
           align="center"
           header-align="center"
@@ -148,6 +148,8 @@
 </template>
 
 <script>
+import { mapState, mapActions } from "vuex";
+
 export default {
   data() {
     return {
@@ -178,85 +180,39 @@ export default {
           imgSrc: require("@/assets/CarList/byd_sl.jpg"),
         },
       ],
+
       // 筛选项
       filters: {
-        brand: "", // 选择的品牌
-        salePrice: "", // 销售价格区间
-        rentalPrice: "", // 租赁价格区间
-        keyword: "", // 搜索关键字
+        brand: "",
+        salePrice: "",
+        rentalPrice: "",
+        keyword: "",
       },
-      // 品牌选项
-      brandOptions: ["特斯拉", "比亚迪", "蔚来", "小鹏"],
+
       // 销售价格选项
       salePriceOptions: [
-        { label: "20万以下", value: "0-20" },
-        { label: "20-30万", value: "20-30" },
-        { label: "30万以上", value: "30-10000000" },
+        { label: "20万以下", value: "0-200000" },
+        { label: "20-30万", value: "200000-300000" },
+        { label: "30万以上", value: "300000-10000000" },
       ],
+
       // 租赁价格选项
       rentalPriceOptions: [
         { label: "3000以下", value: "0-3000" },
         { label: "3000-4000", value: "3000-4000" },
         { label: "4000以上", value: "4000-10000000" },
       ],
-      // 车辆数据
-      cars: [
-        {
-          id: 1,
-          brand: "特斯拉",
-          name: "Model 3",
-          range: 600,
-          rentalPrice: 4000,
-          salePrice: 23.99,
-        },
-        {
-          id: 2,
-          brand: "比亚迪",
-          name: "汉 EV",
-          range: 550,
-          rentalPrice: 3500,
-          salePrice: 21.98,
-        },
-        {
-          id: 3,
-          brand: "蔚来",
-          name: "ES6",
-          range: 580,
-          rentalPrice: 4500,
-          salePrice: 34.99,
-        },
-        {
-          id: 4,
-          brand: "小鹏",
-          name: "P7",
-          range: 670,
-          rentalPrice: 3700,
-          salePrice: 24.98,
-        },
-        {
-          id: 5,
-          brand: "小鹏",
-          name: "P7",
-          range: 670,
-          rentalPrice: 3700,
-          salePrice: 24.98,
-        },
-        {
-          id: 6,
-          brand: "小鹏",
-          name: "P7",
-          range: 670,
-          rentalPrice: 3700,
-          salePrice: 24.98,
-        },
-      ],
-      // 当前页码
+
+      // 分页显示
       currentPage: 1,
-      pageSize: 5, // 每页显示数量
+      pageSize: 5,
     };
   },
 
   computed: {
+    // 绑定 Vuex state 到组件
+    ...mapState("cars", ["cars", "brands"]),
+
     // 计算筛选后的车辆列表
     filteredCars() {
       return this.cars
@@ -275,9 +231,10 @@ export default {
         )
         .filter(
           (car) =>
-            !this.filters.keyword || car.name.includes(this.filters.keyword)
+            !this.filters.keyword || car.model.includes(this.filters.keyword)
         );
     },
+
     paginatedCars() {
       return this.filteredCars.slice(
         (this.currentPage - 1) * this.pageSize,
@@ -287,6 +244,10 @@ export default {
   },
 
   created() {
+    // 组件加载时获取数据
+    this.fetchCars();
+    this.fetchBrands();
+
     // 从 sessionStorage 读取筛选条件
     const savedFilters = sessionStorage.getItem("carListFilters");
     if (savedFilters) {
@@ -300,16 +261,15 @@ export default {
   },
 
   methods: {
+    // 绑定 Vuex action 到组件
+    ...mapActions("cars", ["fetchCars", "fetchBrands"]),
+
     // 价格区间筛选逻辑
     isPriceInRange(price, range) {
       const [min, max] = range.split("-").map(Number);
       return price >= min && price <= max;
     },
-    // 获取数据（未来可对接API）
-    fetchCars() {
-      console.log("筛选条件:", this.filters);
-      this.currentPage = 1; // 搜索时回到第一页
-    },
+
     // 跳转车辆详情页
     goToDetail(id) {
       this.$router.push(`/car/${id}`);
@@ -317,6 +277,7 @@ export default {
     goToDetail2(row) {
       this.$router.push(`/car/${row.id}`);
     },
+
     // 改变分页
     changePage(page) {
       this.currentPage = page;

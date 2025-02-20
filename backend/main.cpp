@@ -1,13 +1,10 @@
-#include <crow.h>
-
-#include "database/db_init.h"
+#include "database/database.h"
+#include "server/crow_server.h"
 
 int main(int argc, char* argv[]) {
     initDatabase();
 
-    crow::SimpleApp app;
+    runCrow();
 
-    CROW_ROUTE(app, "/")([]() { return "EV Rental System Backend"; });
-
-    app.port(8081).multithreaded().run();
+    return 0;
 }
