@@ -1,11 +1,12 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
-#include <mysql/mysql.h>
-
-#include <memory>
+#include "connection_pool.h"
 
 void initDatabase();
-std::shared_ptr<MYSQL> getDatabaseConnection();
+
+inline std::shared_ptr<MYSQL> getDatabaseConnection() {
+    return ConnectionPool::getInstance().getConnection();
+}
 
 #endif  // DATABASE_H

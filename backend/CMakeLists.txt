@@ -35,7 +35,7 @@ link_directories("/usr/lib/x86_64-linux-gnu")
 include_directories(${CMAKE_SOURCE_DIR})
 
 # 编译主程序
-add_executable(server main.cpp database/database.cpp server/crow_server.cpp
+add_executable(server main.cpp database/database.cpp database/connection_pool.cpp server/crow_server.cpp
                       server/handlers/vehicle_handler.cpp)
 
 # 链接所有库
