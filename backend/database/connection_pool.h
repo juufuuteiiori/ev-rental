@@ -8,8 +8,6 @@
 #include <nlohmann/json.hpp>
 #include <queue>
 
-using json = nlohmann::json;
-
 struct DBConfig {
     std::string host;
     std::string user;

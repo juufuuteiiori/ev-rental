@@ -4,6 +4,7 @@
 
 #include <csignal>
 
+#include "handlers/user_handler.h"
 #include "handlers/vehicle_handler.h"
 #include "middleware/cors_middleware.h"
 
@@ -33,6 +34,12 @@ void runCrow() {
 
     // 品牌 API
     CROW_ROUTE(app, "/brands").methods(crow::HTTPMethod::GET)(getBrandList);
+
+    // 账号注册 API
+    CROW_ROUTE(app, "/register").methods(crow::HTTPMethod::POST)(registerUser);
+
+    // 账号登录 API
+    CROW_ROUTE(app, "/login").methods(crow::HTTPMethod::POST)(loginUser);
 
     app.port(8081).multithreaded().run();
 

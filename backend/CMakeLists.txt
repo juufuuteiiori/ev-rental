@@ -31,12 +31,20 @@ include_directories(${json_SOURCE_DIR}/single_include)
 include_directories("/usr/include/mysql")
 link_directories("/usr/lib/x86_64-linux-gnu")
 
+# 添加 libbcrypt
+FetchContent_Declare(
+    libbcrypt
+    GIT_REPOSITORY https://github.com/trusch/libbcrypt.git
+    GIT_TAG master)
+FetchContent_MakeAvailable(libbcrypt)
+include_directories(${libbcrypt_SOURCE_DIR}/include)
+
 # 添加 include 目录
 include_directories(${CMAKE_SOURCE_DIR})
 
 # 编译主程序
 add_executable(server main.cpp database/database.cpp database/connection_pool.cpp server/crow_server.cpp
-                      server/handlers/vehicle_handler.cpp)
+                      server/handlers/vehicle_handler.cpp server/handlers/user_handler.cpp)
 
 # 链接所有库
-target_link_libraries(server ${Boost_LIBRARIES} mysqlclient)
+target_link_libraries(server ${Boost_LIBRARIES} mysqlclient bcrypt)

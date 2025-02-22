@@ -5,10 +5,20 @@ USE ev_rental_database;
 -- 用户表
 CREATE TABLE IF NOT EXISTS users (
     user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,           -- 用户的唯一标识
-    user_name VARCHAR(50) NOT NULL,                            -- 用户名
-    user_phone VARCHAR(15) NOT NULL,                           -- 用户的手机号
+    user_name VARCHAR(50) NOT NULL UNIQUE,                     -- 用户名
+    user_phone VARCHAR(15) UNIQUE,                    -- 用户的手机号
     user_password VARCHAR(255) NOT NULL                        -- 用户的登录密码
 );
+
+INSERT INTO users (user_name, user_phone, user_password)
+SELECT * FROM (
+    SELECT 'alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING' UNION ALL
+    SELECT 'bob', '13800000002', '	$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C' UNION ALL
+    SELECT 'charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u' UNION ALL
+    SELECT 'david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti' UNION ALL
+    SELECT 'eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq'
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM users); -- 默认密码为 "password"
 
 -- 电动车表
 CREATE TABLE IF NOT EXISTS vehicles (

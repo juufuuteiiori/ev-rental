@@ -35,7 +35,7 @@ ConnectionPool::ConnectionPool() : maxConnections(10), currentConnections(0) {
         exit(EXIT_FAILURE);
     }
 
-    json config;
+    nlohmann::json config;
     file >> config;
     dbConfig = {config["host"].get<std::string>(), config["user"].get<std::string>(),
                 config["password"].get<std::string>(), config["database"].get<std::string>()};
