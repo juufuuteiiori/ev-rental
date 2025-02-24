@@ -19,7 +19,7 @@
         <el-dropdown v-else class="dropdown">
           <span class="user-name">用户</span>
           <template v-slot:dropdown>
-            <el-dropdown-item @click="goToProfile">个人中心</el-dropdown-item>
+            <el-dropdown-item @click="goToDashBoard">个人中心</el-dropdown-item>
             <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
           </template>
         </el-dropdown>
@@ -34,7 +34,6 @@ export default {
   data() {
     return {
       isTransparent: true,
-      isLoggedIn: false, // 模拟登录状态，实际从 vuex 中得到
     };
   },
   watch: {
@@ -66,12 +65,17 @@ export default {
     goToLogin() {
       this.$router.push("/login");
     },
-    goToProfile() {
-      this.$router.push("/profile");
+    goToDashBoard() {
+      this.$router.push("/dashboard");
     },
     logout() {
-      this.isLoggedIn = false; // 这里应调用注销 API
+      this.$store.dispatch("jwt/logout");
       this.$router.push("/");
+    },
+  },
+  computed: {
+    isLoggedIn() {
+      return this.$store.getters["jwt/getToken"] != null;
     },
   },
 };

@@ -6,6 +6,7 @@ import LogIn from "@/views/LogIn.vue";
 import CarList from "@/views/CarList.vue";
 import CarDetail from "@/views/CarDetail.vue";
 import OrderPage from "@/views/OrderPage.vue";
+import DashBoard from "@/views/DashBoard.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -34,6 +35,11 @@ const routes = [
     path: "/car/:id",
     name: "CarDetail",
     component: CarDetail,
+  },
+  {
+    path: "/dashboard",
+    name: "DashBoard",
+    component: DashBoard,
   },
   {
     path: "/order/:carId",

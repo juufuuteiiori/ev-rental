@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(EV_Rental_Backend)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_WARN_DEPRECATED
+    OFF
+    CACHE BOOL "" FORCE)
 
 add_definitions(-DDBCONFIG_PATH=\"../database/config.json\")
 
@@ -31,6 +36,9 @@ include_directories(${json_SOURCE_DIR}/single_include)
 include_directories("/usr/include/mysql")
 link_directories("/usr/lib/x86_64-linux-gnu")
 
+# 添加 OpenSSL 依赖
+find_package(OpenSSL REQUIRED)
+
 # 添加 libbcrypt
 FetchContent_Declare(
     libbcrypt
@@ -39,12 +47,27 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(libbcrypt)
 include_directories(${libbcrypt_SOURCE_DIR}/include)
 
+# 添加 jwt-cpp
+FetchContent_Declare(
+    jwt-cpp
+    GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
+    GIT_TAG v0.6.0)
+FetchContent_MakeAvailable(jwt-cpp)
+include_directories(${jwt-cpp_SOURCE_DIR}/include)
+
 # 添加 include 目录
 include_directories(${CMAKE_SOURCE_DIR})
 
 # 编译主程序
-add_executable(server main.cpp database/database.cpp database/connection_pool.cpp server/crow_server.cpp
-                      server/handlers/vehicle_handler.cpp server/handlers/user_handler.cpp)
+add_executable(
+    server
+    main.cpp
+    database/database.cpp
+    database/connection_pool.cpp
+    server/crow_server.cpp
+    server/handlers/vehicle_handler.cpp
+    server/handlers/user_handler.cpp
+    server/utils/jwt_utils.cpp)
 
 # 链接所有库
-target_link_libraries(server ${Boost_LIBRARIES} mysqlclient bcrypt)
+target_link_libraries(server ${Boost_LIBRARIES} mysqlclient bcrypt OpenSSL::Crypto)

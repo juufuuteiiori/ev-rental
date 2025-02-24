@@ -41,6 +41,9 @@ void runCrow() {
     // 账号登录 API
     CROW_ROUTE(app, "/login").methods(crow::HTTPMethod::POST)(loginUser);
 
+    // 获取账号信息 API
+    CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::GET)(getUser);
+
     app.port(8081).multithreaded().run();
 
     g_app = nullptr;
