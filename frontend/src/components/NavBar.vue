@@ -1,39 +1,61 @@
 <template>
-  <header :class="['navbar', isTransparent ? 'transparent' : 'solid']">
-    <div class="nav-container">
-      <!-- Logo -->
-      <div class="logo">EV Rental</div>
+  <div>
+    <header :class="['navbar', isTransparent ? 'transparent' : 'solid']">
+      <div class="nav-container">
+        <!-- Logo -->
+        <div class="logo">EV Rental</div>
 
-      <!-- 导航菜单 -->
-      <nav class="nav-links">
-        <router-link to="/" class="nav-item">首页</router-link>
-        <router-link to="/cars" class="nav-item">租售车辆</router-link>
-        <router-link to="/orders" class="nav-item">我的订单</router-link>
-      </nav>
+        <!-- 导航菜单 -->
+        <nav class="nav-links">
+          <router-link to="/" class="nav-item">首页</router-link>
+          <router-link to="/cars" class="nav-item">租售车辆</router-link>
+          <router-link to="/orders" class="nav-item">我的订单</router-link>
+        </nav>
 
-      <!-- 用户交互按钮 -->
-      <div class="user-menu">
-        <button v-if="!isLoggedIn" @click="goToLogin" class="login-btn">
-          登录 / 注册
-        </button>
-        <el-dropdown v-else class="dropdown">
-          <span class="user-name">用户</span>
-          <template v-slot:dropdown>
-            <el-dropdown-item @click="goToDashBoard">个人中心</el-dropdown-item>
-            <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
-          </template>
-        </el-dropdown>
+        <!-- 用户交互按钮 -->
+        <div class="user-menu">
+          <button v-show="!isLoggedIn" @click="goToLogin" class="login-btn">
+            登录 / 注册
+          </button>
+          <el-dropdown v-show="isLoggedIn" @command="handleCommand">
+            <el-button class="menu-btn">
+              <el-avatar :src="userInfo.avatar || defaultAvatar" />
+            </el-button>
+
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="openUserProfile"
+                >个人中心</el-dropdown-item
+              >
+              <el-dropdown-item command="editUserProfile"
+                >修改资料</el-dropdown-item
+              >
+              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
+    <user-profile-dialog ref="userProfileDialog" />
+    <user-edit-dialog ref="userEditDialog" />
+  </div>
 </template>
 
 <script>
+import UserProfileDialog from "@/components/UserProfileDialog.vue";
+import userEditDialog from "@/components/UserEditDialog.vue";
+
 export default {
   name: "NavBar",
+  components: {
+    UserProfileDialog,
+    userEditDialog,
+  },
   data() {
     return {
       isTransparent: true,
+      userInfo: this.$store.state.user.userInfo,
+      defaultAvatar:
+        "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
     };
   },
   watch: {
@@ -65,11 +87,18 @@ export default {
     goToLogin() {
       this.$router.push("/login");
     },
-    goToDashBoard() {
-      this.$router.push("/dashboard");
+    handleCommand(command) {
+      if (command === "openUserProfile") {
+        this.$refs.userProfileDialog.openDialog();
+      } else if (command === "editUserProfile") {
+        this.$refs.userEditDialog.openDialog(this.$store.state.user.userInfo);
+      } else if (command === "logout") {
+        this.logout();
+      }
     },
     logout() {
       this.$store.dispatch("jwt/logout");
+      this.$store.dispatch("user/logout");
       this.$router.push("/");
     },
   },
@@ -171,11 +200,28 @@ export default {
   align-items: center;
   justify-content: center;
   max-width: 100%; /* 限制宽度 */
+  background-color: transparent;
+  color: transparent;
 }
 
-.user-name {
+.menu-btn {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.menu-btn:hover,
+.menu-btn:active,
+.menu-btn:focus {
+  background-color: transparent;
+}
+
+.el-dropdown-link {
   cursor: pointer;
-  font-size: 16px;
-  margin-right: 10px;
+}
+.el-icon-arrow-down {
+  font-size: 12px;
 }
 </style>

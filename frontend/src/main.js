@@ -14,6 +14,9 @@ Vue.use(VueAwesomeSwiper);
 
 Vue.config.productionTip = false;
 
+document.addEventListener("mousewheel", () => {}, { passive: true });
+document.addEventListener("touchmove", () => {}, { passive: true });
+
 new Vue({
   router, // 挂载路由
   store, // 注册 Vuex

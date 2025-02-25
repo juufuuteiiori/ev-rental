@@ -3,7 +3,7 @@
     <el-result
       icon="warning"
       title="404 Not Found"
-      sub-title="抱歉，您访问的页面不存在"
+      sub-title="抱歉，您访问的页面不存在或没有权限访问"
     >
       <template #extra>
         <el-button type="primary" @click="goBack">返回</el-button>

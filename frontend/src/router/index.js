@@ -1,12 +1,12 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
+import store from "@/store";
 import HomeView from "@/views/HomeView.vue";
 import ErrorPage from "@/views/ErrorPage.vue";
 import LogIn from "@/views/LogIn.vue";
 import CarList from "@/views/CarList.vue";
 import CarDetail from "@/views/CarDetail.vue";
 import OrderPage from "@/views/OrderPage.vue";
-import DashBoard from "@/views/DashBoard.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -37,11 +37,6 @@ const routes = [
     component: CarDetail,
   },
   {
-    path: "/dashboard",
-    name: "DashBoard",
-    component: DashBoard,
-  },
-  {
     path: "/order/:carId",
     name: "OrderPage",
     component: OrderPage,
@@ -60,5 +55,15 @@ const router = new VueRouter({
     }
   },
 }); // 创建实例
+
+router.beforeEach((to, from, next) => {
+  const isLoggedIn = store.getters["jwt/getToken"]; // 从 Vuex 获取登录状态
+
+  if (isLoggedIn && to.path === "/login") {
+    next("/404"); // 跳转到 404
+  } else {
+    next(); // 允许访问其他路由
+  }
+});
 
 export default router; // 导出实例
