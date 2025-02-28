@@ -44,6 +44,9 @@ void runCrow() {
     // 获取账号信息 API
     CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::GET)(getUser);
 
+    // 修改账号信息 API
+    CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::POST)(updateUser);
+
     app.port(8081).multithreaded().run();
 
     g_app = nullptr;

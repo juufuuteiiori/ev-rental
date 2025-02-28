@@ -117,12 +117,11 @@ export default {
       const valid = await this.$refs.loginForm.validate();
 
       if (!valid) {
-        console.log("表单验证失败");
         return;
       }
 
       if (this.usertype === "员工") {
-        console.log("员工登录逻辑，暂未实现");
+        this.$message.error("员工登录逻辑，暂未实现");
         return;
       }
 
@@ -139,16 +138,20 @@ export default {
         const { code, msg, data } = response.data;
 
         if (code === 1) {
-          console.log(`${this.isLogin ? "登录" : "注册"}成功`);
+          this.$message.success(`${this.isLogin ? "登录" : "注册"}成功`);
           this.$store.dispatch("jwt/login", data.token);
           this.fetchUser(data.user_id);
-          this.$router.push("/dashboard");
+          this.$router.push("/");
         } else {
           this.$message.error(msg);
         }
       } catch (error) {
-        console.error("API 请求错误:", error);
-        this.$message.error("网络异常，请稍后重试");
+        if (error.response && error.response.status === 409) {
+          this.$message.error(error.response.data.msg);
+        } else {
+          console.log(error);
+          this.$message.error("网络异常，请稍后重试");
+        }
       }
     },
 
@@ -160,7 +163,7 @@ export default {
       this.isLogin = !this.isLogin;
     },
 
-    validatePasswordMatch(rule, value, callback) {
+    validatePasswordMatch(value, callback) {
       if (!this.isLogin && value !== this.form.password) {
         callback(new Error("两次密码不一致"));
       } else {

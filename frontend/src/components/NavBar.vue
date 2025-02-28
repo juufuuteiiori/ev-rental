@@ -99,7 +99,9 @@ export default {
     logout() {
       this.$store.dispatch("jwt/logout");
       this.$store.dispatch("user/logout");
-      this.$router.push("/");
+      if (this.$route.path !== "/") {
+        this.$router.push("/");
+      }
     },
   },
   computed: {

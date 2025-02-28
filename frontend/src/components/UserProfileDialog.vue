@@ -13,7 +13,7 @@
         class="user-avatar"
       />
 
-      <el-descriptions border column="1" class="descriptions-container">
+      <el-descriptions border :column="1" class="descriptions-container">
         <el-descriptions-item label="用户 ID">{{
           userInfo.user_id
         }}</el-descriptions-item>
@@ -37,7 +37,6 @@ export default {
   data() {
     return {
       dialogVisible: false,
-      userInfo: this.$store.state.user.userInfo,
       defaultAvatar:
         "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
     };
@@ -45,6 +44,11 @@ export default {
   methods: {
     openDialog() {
       this.dialogVisible = true;
+    },
+  },
+  computed: {
+    userInfo() {
+      return this.$store.state.user.userInfo;
     },
   },
 };

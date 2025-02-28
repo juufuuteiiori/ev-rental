@@ -12,7 +12,7 @@ crow::response registerUser(const crow::request& req) {
     auto body = crow::json::load(req.body);
     if (!body || !body.has("user_name") || !body.has("user_password")) {
         result["code"] = 0;
-        result["msg"] = "缺少必要字段";
+        result["msg"] = "缺少用户名或密码";
         return crow::response(400, result);
     }
 
@@ -24,7 +24,7 @@ crow::response registerUser(const crow::request& req) {
     auto conn = getDatabaseConnection();
     if (!conn) {
         result["code"] = 0;
-        result["msg"] = "数据库连接失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -39,7 +39,7 @@ crow::response registerUser(const crow::request& req) {
 
     if (mysql_query(conn.get(), check_query.c_str()) != 0) {
         result["code"] = 0;
-        result["msg"] = "数据库查询失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -57,7 +57,7 @@ crow::response registerUser(const crow::request& req) {
 
     if (mysql_query(conn.get(), insert_query.c_str()) != 0) {
         result["code"] = 0;
-        result["msg"] = "数据库插入失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -72,22 +72,24 @@ crow::response registerUser(const crow::request& req) {
 }
 
 crow::response loginUser(const crow::request& req) {
+    crow::json::wvalue result;
+
     // 解析 JSON 请求
     auto body = crow::json::load(req.body);
     if (!body || !body.has("user_name") || !body.has("user_password")) {
-        return crow::response(400, R"({"error": "缺少必要字段"})");
+        result["code"] = 0;
+        result["msg"] = "缺少用户名或密码";
+        return crow::response(400, result);
     }
 
     std::string user_name = body["user_name"].s();
     std::string user_password = body["user_password"].s();
 
-    crow::json::wvalue result;
-
     // 连接数据库
     auto conn = getDatabaseConnection();
     if (!conn) {
         result["code"] = 0;
-        result["msg"] = "数据库连接失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -101,7 +103,7 @@ crow::response loginUser(const crow::request& req) {
 
     if (mysql_query(conn.get(), check_query.c_str()) != 0) {
         result["code"] = 0;
-        result["msg"] = "数据库查询失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -109,7 +111,7 @@ crow::response loginUser(const crow::request& req) {
     if (!res || mysql_num_rows(res) == 0) {
         if (res) mysql_free_result(res);
         result["code"] = 0;
-        result["msg"] = "用户名不存在";
+        result["msg"] = "用户名或密码错误";
         return crow::response(409, result);
     }
 
@@ -123,10 +125,10 @@ crow::response loginUser(const crow::request& req) {
     // 验证密码
     if (!BCrypt::validatePassword(user_password, hash_password)) {
         result["code"] = 0;
-        result["msg"] = "密码错误";
+        result["msg"] = "用户名或密码错误";
         return crow::response(409, result);
     }
-    std::string token = generateJWT(user_name);
+    std::string token = generateJWT(user_id);
 
     result["code"] = 1;
     result["msg"] = "登录成功";
@@ -135,6 +137,7 @@ crow::response loginUser(const crow::request& req) {
     return crow::response(200, result);
 }
 
+// BUG：用户只能查自己的信息。管理员需要验证
 crow::response getUser(const crow::request& req) {
     crow::json::wvalue result;
 
@@ -142,7 +145,7 @@ crow::response getUser(const crow::request& req) {
     auto user_id = req.url_params.get("user_id");
     if (!user_id) {
         result["code"] = 0;
-        result["msg"] = "缺少 user_id 参数";
+        result["msg"] = "缺少用户ID";
         return crow::response(400, result);
     }
 
@@ -150,7 +153,7 @@ crow::response getUser(const crow::request& req) {
     auto conn = getDatabaseConnection();
     if (!conn) {
         result["code"] = 0;
-        result["msg"] = "数据库连接失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -163,7 +166,7 @@ crow::response getUser(const crow::request& req) {
         "SELECT user_id, user_name, user_phone FROM users WHERE user_id = " + std::string(safe_id);
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["code"] = 0;
-        result["msg"] = "数据库查询失败";
+        result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
@@ -172,7 +175,7 @@ crow::response getUser(const crow::request& req) {
     if (!row) {
         mysql_free_result(res);
         result["code"] = 0;
-        result["msg"] = "用户不存在";
+        result["msg"] = "用户ID错误";
         return crow::response(404, result);
     }
 
@@ -184,5 +187,100 @@ crow::response getUser(const crow::request& req) {
     result["data"]["user_phone"] = row[2];
 
     mysql_free_result(res);
+    return crow::response(200, result);
+}
+
+crow::response updateUser(const crow::request& req) {
+    crow::json::wvalue result;
+
+    // 读取 Authorization 头部
+    std::string authorization = req.get_header_value("Authorization");
+    if (authorization.empty()) {
+        result["code"] = 0;
+        result["msg"] = "缺少 Authorization 头部";
+        return crow::response(400, result);
+    }
+
+    std::string token;
+    if (authorization.find("Bearer ") == 0) {
+        token = authorization.substr(7);  // 提取 token 部分
+    } else {
+        result["code"] = 0;
+        result["msg"] = "无效的 Authorization 格式";
+        return crow::response(400, result);
+    }
+
+    // 验证 JWT
+    auto jwt_user_id = validateJWT(token);  // 需要实现此函数，验证 token 是否有效
+    if (!jwt_user_id) {
+        result["code"] = 0;
+        result["msg"] = "无效的 token";
+        return crow::response(401, result);  // 401 Unauthorized
+    }
+
+    // 解析 JSON 请求
+    auto body = crow::json::load(req.body);
+    if (!body || !body.has("user_name")) {
+        result["code"] = 0;
+        result["msg"] = "缺少用户名";
+        return crow::response(400, result);
+    }
+
+    std::string user_id = jwt_user_id.value();
+    std::string user_name = body["user_name"].s();
+
+    std::string user_phone =
+        body.has("user_phone") ? std::string(body["user_phone"].s()) : std::string();
+    std::string user_password =
+        body.has("user_password") ? std::string(body["user_password"].s()) : std::string();
+    std::string hashed_password =
+        !user_password.empty() ? BCrypt::generateHash(user_password) : "";  // 哈希密码
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["code"] = 0;
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    // 防止 SQL 注入
+    char safe_id[100], safe_name[100], safe_phone[100], safe_password[255];
+    mysql_real_escape_string(conn.get(), safe_id, user_id.c_str(), user_id.length());
+    mysql_real_escape_string(conn.get(), safe_name, user_name.c_str(), user_name.length());
+    mysql_real_escape_string(conn.get(), safe_phone, user_phone.c_str(), user_phone.length());
+    mysql_real_escape_string(conn.get(), safe_password, hashed_password.c_str(),
+                             hashed_password.length());
+
+    std::string check_query =
+        "SELECT * FROM users WHERE user_name = '" + std::string(safe_name) + "'";
+    if (mysql_query(conn.get(), check_query.c_str()) != 0) {
+        result["code"] = 0;
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+    MYSQL_RES* res = mysql_store_result(conn.get());
+    if (res && mysql_num_rows(res) != 0) {
+        if (res) mysql_free_result(res);
+        result["code"] = 0;
+        result["msg"] = "用户名已存在";
+        return crow::response(409, result);
+    }
+
+    std::string query = "UPDATE users SET user_name = '" + std::string(safe_name) + "'";
+    query += ", user_phone = '" + std::string(safe_phone) + "'";
+    if (!user_password.empty()) {
+        query += ", user_password = '" + std::string(safe_password) + "'";
+    }
+    query += " WHERE user_id = '" + std::string(safe_id) + "'";
+
+    if (mysql_query(conn.get(), query.c_str()) != 0) {
+        result["code"] = 0;
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    result["code"] = 1;
+    result["msg"] = "修改成功";
     return crow::response(200, result);
 }
