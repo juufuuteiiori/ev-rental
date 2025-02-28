@@ -8,6 +8,7 @@ set(CMAKE_WARN_DEPRECATED
     CACHE BOOL "" FORCE)
 
 add_definitions(-DDBCONFIG_PATH=\"../database/config.json\")
+add_definitions(-DASSETS_PATH="${CMAKE_SOURCE_DIR}/assets/images")
 
 # 使用 FetchContent 添加外部依赖
 include(FetchContent)

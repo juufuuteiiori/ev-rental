@@ -66,5 +66,8 @@ export const api = {
   // 修改用户信息
   updateUser: (userData) => apiClient.post("/user", userData),
 
+  // 获取推荐车辆信息
+  getRecommendedCars: () => apiClient.get("/recommended"),
+
   // 其他 API...
 };

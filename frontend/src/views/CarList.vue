@@ -2,14 +2,18 @@
   <div class="car-list">
     <!--  推荐展示区域 -->
     <el-carousel height="100vh">
-      <el-carousel-item v-for="car in recommendedCars" :key="car.id">
-        <div class="car-card" @click="goToDetail(car.id)">
-          <img :src="car.imgSrc" alt="推荐车辆" class="car-image" />
+      <el-carousel-item v-for="car in recommendedCars" :key="car.model_id">
+        <div class="car-card" @click="goToDetail(car.model_id)">
+          <img :src="getImageUrl(car.image)" alt="推荐车辆" class="car-image" />
           <div class="car-info">
-            <h3>{{ car.name }}</h3>
-            <p>续航：{{ car.range }}</p>
-            <p>销售价格：{{ car.salePrice }}</p>
-            <p>租赁价格: {{ car.rentalPrice }}</p>
+            <h3>
+              {{ car.brand_name || "未知品牌" }}
+              {{ car.model_name || "未知车型" }}
+            </h3>
+
+            <p>续航：{{ car.range }} km</p>
+            <p>销售价格：¥ {{ car.salePrice }} 起</p>
+            <p>租赁价格: ¥ {{ car.rentalPrice }} / 月起</p>
           </div>
         </div>
       </el-carousel-item>
@@ -153,34 +157,6 @@ import { mapState, mapActions } from "vuex";
 export default {
   data() {
     return {
-      recommendedCars: [
-        {
-          id: 1,
-          name: "特斯拉 Model 3",
-          range: "567 km",
-          salePrice: "¥ 23.99 万起",
-          rentalPrice: "¥ 4000 每月起",
-          imgSrc: require("@/assets/CarList/byd_sl.jpg"),
-        },
-        {
-          id: 2,
-          name: "比亚迪 汉 EV",
-          range: "605 km",
-          salePrice: "¥ 21.98 万起",
-          rentalPrice: "¥ 3500 每月起",
-          imgSrc: require("@/assets/CarList/byd_sl.jpg"),
-        },
-        {
-          id: 3,
-          brand: "蔚来",
-          name: "ES6",
-          range: "562 km",
-          salePrice: "¥ 34.99 万起",
-          rentalPrice: "¥ 4500 每月起",
-          imgSrc: require("@/assets/CarList/byd_sl.jpg"),
-        },
-      ],
-
       // 筛选项
       filters: {
         brand: "",
@@ -211,7 +187,7 @@ export default {
 
   computed: {
     // 绑定 Vuex state 到组件
-    ...mapState("cars", ["cars", "brands"]),
+    ...mapState("cars", ["cars", "brands", "recommendedCars"]),
 
     // 计算筛选后的车辆列表
     filteredCars() {
@@ -247,6 +223,7 @@ export default {
     // 组件加载时获取数据
     this.fetchCars();
     this.fetchBrands();
+    this.fetchRecommendedCars();
 
     // 从 sessionStorage 读取筛选条件
     const savedFilters = sessionStorage.getItem("carListFilters");
@@ -262,7 +239,7 @@ export default {
 
   methods: {
     // 绑定 Vuex action 到组件
-    ...mapActions("cars", ["fetchCars", "fetchBrands"]),
+    ...mapActions("cars", ["fetchCars", "fetchBrands", "fetchRecommendedCars"]),
 
     // 价格区间筛选逻辑
     isPriceInRange(price, range) {
@@ -275,12 +252,16 @@ export default {
       this.$router.push(`/car/${id}`);
     },
     goToDetail2(row) {
-      this.$router.push(`/car/${row.id}`);
+      this.$router.push(`/car/${row.model_id}`);
     },
 
     // 改变分页
     changePage(page) {
       this.currentPage = page;
+    },
+
+    getImageUrl(imagePath) {
+      return `http://localhost:8081/static/${imagePath}`;
     },
   },
 };

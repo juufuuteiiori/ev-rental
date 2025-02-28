@@ -5,6 +5,8 @@ const state = {
   isCarsLoaded: false,
   brands: [],
   isBrandsLoaded: false,
+  recommendedCars: [],
+  isRecommendedCarsLoaded: false,
 };
 
 const mutations = {
@@ -15,6 +17,10 @@ const mutations = {
   setBrands(state, brands) {
     state.brands = brands || [];
     state.isBrandsLoaded = true;
+  },
+  setRecommendedCars(state, recommendedCars) {
+    state.recommendedCars = recommendedCars || [];
+    state.isRecommendedCarsLoaded = true;
   },
 };
 
@@ -60,6 +66,28 @@ const actions = {
     } catch (error) {
       console.error("获取品牌数据失败:", error);
       commit("setBrands", []);
+    }
+  },
+
+  async fetchRecommendedCars({ state, commit }) {
+    if (state.isRecommendedCarsLoaded) return;
+
+    try {
+      const response = await api.getRecommendedCars();
+      const { code, msg, data } = response.data;
+
+      if (code === 0) {
+        console.error("获取推荐车辆数据失败:", msg);
+        commit("setRecommendedCars", []);
+      } else if (Array.isArray(data)) {
+        commit("setRecommendedCars", data);
+      } else {
+        console.warn("返回数据格式异常:", response.data);
+        commit("setRecommendedCars", []);
+      }
+    } catch (error) {
+      console.error("获取推荐车辆数据失败:", error);
+      commit("setRecommendedCars", []);
     }
   },
 };

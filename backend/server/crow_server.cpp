@@ -47,6 +47,26 @@ void runCrow() {
     // 修改账号信息 API
     CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::POST)(updateUser);
 
+    // 获取推荐车辆信息 API
+    CROW_ROUTE(app, "/recommended").methods(crow::HTTPMethod::GET)(getRecommendedVehicleList);
+
+    CROW_ROUTE(app, "/static/<string>")
+        .methods(crow::HTTPMethod::GET)([](const crow::request&, std::string filename) {
+            // std::string path = "backend/assets/images/" + filename;
+            std::string path = std::string(ASSETS_PATH) + "/" + filename;
+            std::ifstream file(path, std::ios::binary);
+
+            if (!file) {
+                return crow::response(404, "File not found");
+            }
+
+            std::ostringstream buffer;
+            buffer << file.rdbuf();
+            crow::response res(buffer.str());
+            res.set_header("Content-Type", "image/png");
+            return res;
+        });
+
     app.port(8081).multithreaded().run();
 
     g_app = nullptr;
