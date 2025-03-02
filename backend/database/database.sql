@@ -18,14 +18,102 @@ SELECT * FROM (
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM users); -- 默认密码为 "password"
 
+-- 型号表
+CREATE TABLE IF NOT EXISTS models (
+    model_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,          -- 型号唯一标识
+    brand_name VARCHAR(100) NOT NULL,                          -- 品牌名称
+    model_name VARCHAR(100) NOT NULL,                          -- 型号名称
+    power_type ENUM('电动', '混动') NOT NULL,                   -- 动力类型
+    max_range INT,                                             -- 最大续航里程（单位：公里）
+    leasing_price DECIMAL(10, 2) NOT NULL,                     -- 租赁价格（每月，单位：元）
+    purchase_price DECIMAL(10, 2) NOT NULL,                    -- 购买价格（单位：元）
+    peak_power DECIMAL(5, 2),                                  -- 充电峰值功率（单位：kW）
+    acceleration DECIMAL(5, 2),                                -- 加速度（百公里，单位：秒）
+    seat_count INT,                                            -- 座位数
+    storage_space INT,                                         -- 储物空间（单位：升）
+    image_paths TEXT,                                          -- 图片路径（多张图片，用逗号分隔）
+    recommend BOOLEAN NOT NULL DEFAULT FALSE,                  -- 是否为推荐车辆
+    UNIQUE KEY unique_brand_model (brand_name, model_name)     -- 确保同一车型同一天只能有一条记录
+);
+
+INSERT INTO models (brand_name, model_name, power_type, max_range, leasing_price, purchase_price, peak_power, acceleration, seat_count, storage_space, image_paths, recommend)
+VALUES
+    ('特斯拉', 'Model 3', '电动', 600, 4500.00, 280000.00, 250.00, 3.5, 5, 425, 'byd_sl.jpg,byd_sl.jpg', TRUE),
+    ('比亚迪', '汉 EV', '电动', 605, 3800.00, 250000.00, 200.00, 3.9, 5, 500, 'byd_sl.jpg,byd_sl.jpg', TRUE),
+    ('蔚来', 'ET7', '电动', 700, 5000.00, 450000.00, 280.00, 3.8, 5, 520, 'byd_sl.jpg', FALSE),
+    ('小鹏', 'P7', '电动', 670, 4000.00, 270000.00, 220.00, 4.0, 5, 450, 'byd_sl.jpg', FALSE),
+    ('理想', 'L9', '混动', 1100, 6000.00, 460000.00, 180.00, 5.5, 6, 550, 'byd_sl.jpg', TRUE),
+    ('极氪', '001', '电动', 620, 4300.00, 320000.00, 240.00, 3.8, 5, 500, 'byd_sl.jpg', FALSE),
+    ('哪吒', 'S', '电动', 650, 3500.00, 210000.00, 210.00, 4.2, 5, 400, 'byd_sl.jpg', FALSE),
+    ('广汽埃安', 'AION Y', '电动', 510, 3000.00, 160000.00, 150.00, 6.9, 5, 380, 'byd_sl.jpg', FALSE),
+    ('宝马', 'iX3', '电动', 550, 5500.00, 400000.00, 200.00, 5.0, 5, 500, 'byd_sl.jpg', TRUE),
+    ('奔驰', 'EQE', '电动', 630, 6000.00, 480000.00, 260.00, 4.5, 5, 540, 'byd_sl.jpg', TRUE)
+ON DUPLICATE KEY UPDATE
+    power_type = VALUES(power_type),
+    max_range = VALUES(max_range),
+    leasing_price = VALUES(leasing_price),
+    purchase_price = VALUES(purchase_price),
+    peak_power = VALUES(peak_power),
+    acceleration = VALUES(acceleration),
+    seat_count = VALUES(seat_count),
+    storage_space = VALUES(storage_space),
+    image_paths = VALUES(image_paths),
+    recommend = VALUES(recommend);
+
 -- 电动车表
 CREATE TABLE IF NOT EXISTS vehicles (
     vehicle_id INT PRIMARY KEY AUTO_INCREMENT,                 -- 电动车唯一标识
+    model_id INT NOT NULL,                                     -- 关联的车型 ID
     license_plate VARCHAR(20) NOT NULL UNIQUE,                 -- 车牌号
     purchase_date DATE,                                        -- 购置日期
     location VARCHAR(100),                                     -- 当前所在位置（城市/区域）
-    status ENUM('可用', '维修中', '不可用') NOT NULL             -- 电动车状态
+    status ENUM('可用', '维修中') NOT NULL,                     -- 电动车状态
+    FOREIGN KEY (model_id) REFERENCES models(model_id) ON DELETE CASCADE
 );
+
+INSERT INTO vehicles (model_id, license_plate, purchase_date, location, status)
+VALUES
+    -- 特斯拉 Model 3
+    (1, '沪A12345', '2023-06-15', '上海', '可用'),
+    (1, '京B67890', '2023-07-20', '北京', '维修中'),
+    (1, '粤C54321', '2023-08-05', '广州', '可用'),
+
+    -- 比亚迪 汉 EV
+    (2, '苏D98765', '2023-05-10', '南京', '可用'),
+    (2, '浙E45678', '2023-06-25', '杭州', '维修中'),
+    (2, '湘F23456', '2023-07-30', '长沙', '可用'),
+
+    -- 蔚来 ET7
+    (3, '渝G34567', '2023-09-10', '重庆', '维修中'),
+    (3, '津H56789', '2023-10-15', '天津', '可用'),
+
+    -- 小鹏 P7
+    (4, '鲁I67890', '2023-11-05', '青岛', '维修中'),
+    (4, '闽J78901', '2023-12-12', '福州', '可用'),
+
+    -- 理想 L9
+    (5, '桂K89012', '2023-06-07', '南宁', '可用'),
+    (5, '川L90123', '2023-07-08', '成都', '维修中'),
+
+    -- 极氪 001
+    (6, '贵M01234', '2023-08-09', '贵阳', '可用'),
+    (6, '云N12345', '2023-09-20', '昆明', '维修中'),
+
+    -- 哪吒 S
+    (7, '陕O23456', '2023-04-18', '西安', '可用'),
+
+    -- 广汽埃安 AION Y
+    (8, '蒙P34567', '2023-05-29', '呼和浩特', '维修中'),
+
+    -- 宝马 iX3
+    (9, '新Q45678', '2023-06-30', '乌鲁木齐', '可用'),
+
+    -- 奔驰 EQE
+    (10, '藏R56789', '2023-07-25', '拉萨', '维修中')
+ON DUPLICATE KEY UPDATE
+    purchase_date = VALUES(purchase_date),
+    location = VALUES(location),
+    status = VALUES(status);
 
 -- 订单表
 CREATE TABLE IF NOT EXISTS orders (
@@ -41,43 +129,88 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id)   -- 外键，关联电动车表
 );
 
--- 型号表
-CREATE TABLE IF NOT EXISTS models (
-    model_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,          -- 型号唯一标识
-    brand_name VARCHAR(100) NOT NULL,                          -- 品牌名称
-    model_name VARCHAR(100) NOT NULL,                          -- 型号名称
-    power_type ENUM('电动', '混动') NOT NULL,                   -- 动力类型
-    max_range INT,                                             -- 最大续航里程（单位：公里）
-    leasing_price DECIMAL(10, 2) NOT NULL,                     -- 租赁价格（每月，单位：元）
-    purchase_price DECIMAL(10, 2) NOT NULL,                    -- 购买价格（单位：元）
-    peak_power DECIMAL(5, 2),                                  -- 充电峰值功率（单位：kW）
-    acceleration DECIMAL(5, 2),                                -- 加速度（百公里，单位：秒）
-    seat_count INT,                                            -- 座位数
-    storage_space INT,                                         -- 储物空间（单位：升）
-    image_paths TEXT,                                          -- 图片路径（多张图片，用逗号分隔）
-    recommend BOOLEAN NOT NULL DEFAULT FALSE                   -- 是否为推荐车辆
+CREATE TABLE IF NOT EXISTS model_price_history (
+    history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    model_id INT NOT NULL,                                     -- 关联的车型
+    record_date DATE NOT NULL,                                 -- 价格记录日期
+    sale_price DECIMAL(10,2) NOT NULL,                         -- 购车价格
+    rental_price DECIMAL(10,2) NOT NULL,                       -- 租赁价格
+    FOREIGN KEY (model_id) REFERENCES models(model_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_model_date (model_id, record_date)       -- 确保同一车型同一天只能有一条记录
 );
 
-INSERT INTO models (brand_name, model_name, power_type, max_range, leasing_price, purchase_price, peak_power, acceleration, seat_count, storage_space, image_paths, recommend)
-SELECT * FROM (
-    SELECT '特斯拉', 'Model 3', '电动', 600, 4500.00, 280000.00, 250.00, 3.5, 5, 425, 'byd_sl.jpg', TRUE UNION ALL
-    SELECT '比亚迪', '汉 EV', '电动', 605, 3800.00, 250000.00, 200.00, 3.9, 5, 500, 'byd_sl.jpg', TRUE UNION ALL
-    SELECT '蔚来', 'ET7', '电动', 700, 5000.00, 450000.00, 280.00, 3.8, 5, 520, 'byd_sl.jpg', FALSE UNION ALL
-    SELECT '小鹏', 'P7', '电动', 670, 4000.00, 270000.00, 220.00, 4.0, 5, 450, 'byd_sl.jpg', FALSE UNION ALL
-    SELECT '理想', 'L9', '混动', 1100, 6000.00, 460000.00, 180.00, 5.5, 6, 550, 'byd_sl.jpg', TRUE UNION ALL
-    SELECT '极氪', '001', '电动', 620, 4300.00, 320000.00, 240.00, 3.8, 5, 500, 'byd_sl.jpg', FALSE UNION ALL
-    SELECT '哪吒', 'S', '电动', 650, 3500.00, 210000.00, 210.00, 4.2, 5, 400, 'byd_sl.jpg', FALSE UNION ALL
-    SELECT '广汽埃安', 'AION Y', '电动', 510, 3000.00, 160000.00, 150.00, 6.9, 5, 380, 'byd_sl.jpg', FALSE UNION ALL
-    SELECT '宝马', 'iX3', '电动', 550, 5500.00, 400000.00, 200.00, 5.0, 5, 500, 'byd_sl.jpg', TRUE UNION ALL
-    SELECT '奔驰', 'EQE', '电动', 630, 6000.00, 480000.00, 260.00, 4.5, 5, 540, 'byd_sl.jpg', TRUE
-) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM models);
+INSERT INTO model_price_history (model_id, record_date, sale_price, rental_price)
+VALUES 
+    -- 特斯拉 Model 3
+    (1, '2024-01-01', 275000.00, 4400.00),
+    (1, '2024-02-01', 278000.00, 4450.00),
+    (1, '2024-03-01', 280000.00, 4500.00),
+    (1, '2024-04-01', 282000.00, 4550.00),
+    (1, '2024-05-01', 285000.00, 4600.00),
 
--- 车辆型号关系表
-CREATE TABLE IF NOT EXISTS vehicle_model (
-    relation_id INT PRIMARY KEY AUTO_INCREMENT,                -- 关系记录的唯一标识
-    vehicle_id INT NOT NULL,                                   -- 外键：电动车表的唯一标识
-    model_id INT NOT NULL,                                     -- 外键：型号表的唯一标识
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id),  -- 关联电动车表
-    FOREIGN KEY (model_id) REFERENCES models(model_id)         -- 关联型号表
-);
+    -- 比亚迪 汉 EV
+    (2, '2024-01-01', 245000.00, 3700.00),
+    (2, '2024-02-01', 248000.00, 3750.00),
+    (2, '2024-03-01', 250000.00, 3800.00),
+    (2, '2024-04-01', 253000.00, 3850.00),
+    (2, '2024-05-01', 255000.00, 3900.00),
+
+    -- 蔚来 ET7
+    (3, '2024-01-01', 440000.00, 4900.00),
+    (3, '2024-02-01', 445000.00, 4950.00),
+    (3, '2024-03-01', 450000.00, 5000.00),
+    (3, '2024-04-01', 455000.00, 5050.00),
+    (3, '2024-05-01', 460000.00, 5100.00),
+
+    -- 小鹏 P7
+    (4, '2024-01-01', 260000.00, 3900.00),
+    (4, '2024-02-01', 265000.00, 3950.00),
+    (4, '2024-03-01', 270000.00, 4000.00),
+    (4, '2024-04-01', 275000.00, 4050.00),
+    (4, '2024-05-01', 280000.00, 4100.00),
+
+    -- 理想 L9
+    (5, '2024-01-01', 450000.00, 5900.00),
+    (5, '2024-02-01', 455000.00, 5950.00),
+    (5, '2024-03-01', 460000.00, 6000.00),
+    (5, '2024-04-01', 465000.00, 6050.00),
+    (5, '2024-05-01', 470000.00, 6100.00),
+
+    -- 极氪 001
+    (6, '2024-01-01', 315000.00, 4200.00),
+    (6, '2024-02-01', 318000.00, 4250.00),
+    (6, '2024-03-01', 320000.00, 4300.00),
+    (6, '2024-04-01', 323000.00, 4350.00),
+    (6, '2024-05-01', 325000.00, 4400.00),
+
+    -- 哪吒 S
+    (7, '2024-01-01', 205000.00, 3400.00),
+    (7, '2024-02-01', 208000.00, 3450.00),
+    (7, '2024-03-01', 210000.00, 3500.00),
+    (7, '2024-04-01', 213000.00, 3550.00),
+    (7, '2024-05-01', 215000.00, 3600.00),
+
+    -- 广汽埃安 AION Y
+    (8, '2024-01-01', 155000.00, 2900.00),
+    (8, '2024-02-01', 158000.00, 2950.00),
+    (8, '2024-03-01', 160000.00, 3000.00),
+    (8, '2024-04-01', 163000.00, 3050.00),
+    (8, '2024-05-01', 165000.00, 3100.00),
+
+    -- 宝马 iX3
+    (9, '2024-01-01', 395000.00, 5400.00),
+    (9, '2024-02-01', 398000.00, 5450.00),
+    (9, '2024-03-01', 400000.00, 5500.00),
+    (9, '2024-04-01', 403000.00, 5550.00),
+    (9, '2024-05-01', 405000.00, 5600.00),
+
+    -- 奔驰 EQE
+    (10, '2024-01-01', 475000.00, 5900.00),
+    (10, '2024-02-01', 478000.00, 5950.00),
+    (10, '2024-03-01', 480000.00, 6000.00),
+    (10, '2024-04-01', 483000.00, 6050.00),
+    (10, '2024-05-01', 485000.00, 6100.00)
+
+ON DUPLICATE KEY UPDATE 
+    sale_price = VALUES(sale_price), 
+    rental_price = VALUES(rental_price);

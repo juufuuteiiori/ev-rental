@@ -5,8 +5,11 @@
 
       <!-- 车辆图片轮播 -->
       <el-carousel class="car-carousel">
-        <el-carousel-item v-for="(image, index) in car.images" :key="index">
-          <img :src="image" class="car-image" />
+        <el-carousel-item
+          v-for="(image, index) in car.image_paths"
+          :key="index"
+        >
+          <img :src="getImageUrl(image)" class="car-image" />
         </el-carousel-item>
       </el-carousel>
 
@@ -17,16 +20,16 @@
           <p><strong>动力类型：</strong> {{ car.power_type }}</p>
           <p>
             <strong>销售价格：</strong>
-            <span class="price">¥ {{ car.salePrice }} 万</span>
+            <span class="price">¥ {{ car.purchase_price }} 万</span>
           </p>
           <p>
             <strong>租赁价格：</strong>
-            <span class="price">¥ {{ car.rentalPrice }} / 月</span>
+            <span class="price">¥ {{ car.leasing_price }} / 月</span>
           </p>
-          <p><strong>充电峰值功率：</strong> {{ car.charging_power }} kW</p>
+          <p><strong>充电峰值功率：</strong> {{ car.peak_power }} kW</p>
           <p><strong>加速（百公里）：</strong> {{ car.acceleration }} s</p>
-          <p><strong>座位数：</strong> {{ car.seats }}</p>
-          <p><strong>储物空间：</strong> {{ car.trunk_space }} L</p>
+          <p><strong>座位数：</strong> {{ car.seat_count }}</p>
+          <p><strong>储物空间：</strong> {{ car.storage_space }} L</p>
           <p><strong>可用数量：</strong> {{ car.available_number }}</p>
         </div>
       </div>
@@ -55,50 +58,35 @@
 
 <script>
 import * as echarts from "echarts";
-// import axios from "axios";
+import { api } from "@/api";
 
 export default {
   name: "CarDetail",
   data() {
     return {
       car: {}, // 车辆数据
-      carHistoryPrices: [],
     };
   },
   methods: {
+    getImageUrl(imagePath) {
+      return `http://localhost:8081/static/${imagePath}`;
+    },
+
     async fetchCarDetails() {
       const carId = this.$route.params.id;
-      //   const response = await axios.get(`/api/cars/${carId}`);
-      //   this.car = response.data;
-      this.car = {
-        id: carId,
-        brand_name: "特斯拉",
-        model_name: "Model 3",
-        max_range: 600,
-        rentalPrice: 4000,
-        salePrice: 23.99,
-        power_type: "电动",
-        charging_power: 250,
-        acceleration: 4.4,
-        seats: 5,
-        trunk_space: 682,
-        available_number: 1,
-        images: [
-          require("@/assets/CarList/byd_sl.jpg"),
-          require("@/assets/CarList/byd_sl.jpg"),
-        ],
-      };
+      try {
+        const response = await api.getModelById(carId);
+        const { data } = response.data;
+        this.car = data;
+      } catch (error) {
+        console.error("获取车辆信息失败", error);
+        this.car = null;
+      }
+      console.log(this.car);
 
       // 渲染图表
       this.renderRadarChart();
 
-      this.carHistoryPrices = [
-        { date: "2024-01-01", salePrice: 20, rentalPrice: 2 },
-        { date: "2024-02-01", salePrice: 21, rentalPrice: 2.2 },
-        { date: "2024-03-01", salePrice: 20.5, rentalPrice: 2.1 },
-        { date: "2024-04-01", salePrice: 21.5, rentalPrice: 2.3 },
-        { date: "2024-05-01", salePrice: 21.0, rentalPrice: 2.1 },
-      ];
       this.renderLineChart();
     },
 
@@ -121,10 +109,10 @@ export default {
               {
                 value: [
                   this.car.max_range, // 续航
-                  this.car.charging_power, // 充电功率
+                  this.car.peak_power, // 充电功率
                   10 - this.car.acceleration, // 加速度
-                  this.car.seats, // 座位数
-                  this.car.trunk_space, // 储物空间
+                  this.car.seat_count, // 座位数
+                  this.car.storage_space, // 储物空间
                 ],
                 name: this.car.model_name,
               },
@@ -139,43 +127,92 @@ export default {
       const lineChart = echarts.init(this.$refs.lineChart);
 
       // 从历史数据中提取日期、销售价格、租赁价格
-      const dates = this.carHistoryPrices.map((item) => item.date);
-      const salePrices = this.carHistoryPrices.map((item) => item.salePrice);
-      const rentalPrices = this.carHistoryPrices.map(
+      const dates = this.car.history_prices.map((item) => item.date);
+      const salePrices = this.car.history_prices.map((item) => item.salePrice);
+      const rentalPrices = this.car.history_prices.map(
         (item) => item.rentalPrice
       );
+
+      function calculateScaleFactor(range, average) {
+        const ratio = range / average; // 计算 range 和 average 的比例
+
+        if (ratio < 0.1) return 0.3; // 数据变化较小，增加系数
+        if (ratio < 0.5) return 0.2; // 数据变化适中
+        if (ratio < 1) return 0.1; // 数据变化较大
+        return 0.05; // 数据变化很大，缩小系数
+      }
+
+      const minSale = Math.min(...salePrices);
+      const maxSale = Math.max(...salePrices);
+      const saleRange = maxSale - minSale;
+      const saleAverage =
+        salePrices.reduce((sum, value) => sum + value, 0) / salePrices.length;
+      const saleFactor = calculateScaleFactor(saleRange, saleAverage);
+      const minSalePrice = minSale - saleRange * saleFactor;
+      const maxSalePrice = maxSale + saleRange * saleFactor;
+
+      const minRental = Math.min(...rentalPrices);
+      const maxRental = Math.max(...rentalPrices);
+      const rentalRange = maxRental - minRental;
+      const rentalAverage =
+        rentalPrices.reduce((sum, value) => sum + value, 0) /
+        rentalPrices.length;
+      const rentalFactor = calculateScaleFactor(rentalRange, rentalAverage);
+      const minRentalPrice = minRental - rentalRange * rentalFactor;
+      const maxRentalPrice = maxRental + rentalRange * rentalFactor;
 
       const option = {
         title: {},
         tooltip: {
           trigger: "axis",
+          axisPointer: {
+            type: "cross", // 显示十字指示线
+          },
         },
         legend: {
-          data: ["销售价格（万元）", "租赁价格（千元）"],
+          data: ["销售价格", "租赁价格"],
         },
         xAxis: {
           type: "category",
           data: dates,
         },
-        yAxis: {
-          type: "value",
-          axisLabel: {
-            formatter: "{value} ",
+        yAxis: [
+          {
+            type: "value",
+            name: "销售价格",
+            position: "left",
+            min: minSalePrice,
+            max: maxSalePrice,
+            axisLabel: {
+              formatter: "{value}",
+            },
           },
-        },
+          {
+            type: "value",
+            name: "租赁价格",
+            position: "right",
+            min: minRentalPrice,
+            max: maxRentalPrice,
+            axisLabel: {
+              formatter: "{value}",
+            },
+          },
+        ],
         series: [
           {
-            name: "销售价格（万元）",
+            name: "销售价格",
             type: "line",
             data: salePrices,
-            smooth: true, // 平滑折线
+            smooth: true,
+            yAxisIndex: 0, // 绑定左侧 y 轴
             color: "#3eaf7c",
           },
           {
-            name: "租赁价格（千元）",
+            name: "租赁价格",
             type: "line",
             data: rentalPrices,
-            smooth: true, // 平滑折线
+            smooth: true,
+            yAxisIndex: 1, // 绑定右侧 y 轴
             color: "#ff9900",
           },
         ],

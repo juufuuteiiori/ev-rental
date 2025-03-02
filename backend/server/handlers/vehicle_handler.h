@@ -6,5 +6,6 @@
 crow::response getBrandList();
 crow::response getVehicleList();
 crow::response getRecommendedVehicleList();
+crow::response getVehicleDetails(const crow::request& req);
 
 #endif  // VEHICLE_HANDLER_H

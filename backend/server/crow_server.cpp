@@ -32,6 +32,9 @@ void runCrow() {
     // 车辆 API
     CROW_ROUTE(app, "/vehicles").methods(crow::HTTPMethod::GET)(getVehicleList);
 
+    // 车辆详情 API
+    CROW_ROUTE(app, "/model").methods(crow::HTTPMethod::GET)(getVehicleDetails);
+
     // 品牌 API
     CROW_ROUTE(app, "/brands").methods(crow::HTTPMethod::GET)(getBrandList);
 

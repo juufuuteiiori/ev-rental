@@ -69,5 +69,8 @@ export const api = {
   // 获取推荐车辆信息
   getRecommendedCars: () => apiClient.get("/recommended"),
 
+  // 获取品牌车辆详细信息
+  getModelById: (model_id) => apiClient.get("/model", { params: { model_id } }),
+
   // 其他 API...
 };

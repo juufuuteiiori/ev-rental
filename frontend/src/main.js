@@ -21,4 +21,10 @@ new Vue({
   router, // 挂载路由
   store, // 注册 Vuex
   render: (h) => h(App),
+  created() {
+    this.$store.dispatch("jwt/checkTokenExpiration");
+    setInterval(() => {
+      this.$store.dispatch("jwt/checkTokenExpiration");
+    }, 60 * 1000);
+  },
 }).$mount("#app");

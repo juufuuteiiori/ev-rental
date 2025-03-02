@@ -43,14 +43,12 @@ crow::response registerUser(const crow::request& req) {
         return crow::response(500, result);
     }
 
-    MYSQL_RES* res = mysql_store_result(conn.get());
-    if (res && mysql_num_rows(res) > 0) {
-        mysql_free_result(res);
+    std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
+    if (res && mysql_num_rows(res.get()) > 0) {
         result["code"] = 0;
         result["msg"] = "用户名已存在";
         return crow::response(409, result);
     }
-    mysql_free_result(res);
 
     std::string insert_query = "INSERT INTO users (user_name, user_password) VALUES ('" +
                                std::string(safe_name) + "', '" + std::string(safe_password) + "')";
@@ -107,20 +105,17 @@ crow::response loginUser(const crow::request& req) {
         return crow::response(500, result);
     }
 
-    MYSQL_RES* res = mysql_store_result(conn.get());
-    if (!res || mysql_num_rows(res) == 0) {
-        if (res) mysql_free_result(res);
+    std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
+    if (!res || mysql_num_rows(res.get()) == 0) {
         result["code"] = 0;
         result["msg"] = "用户名或密码错误";
         return crow::response(409, result);
     }
 
     // 获取查询结果
-    MYSQL_ROW row = mysql_fetch_row(res);
+    MYSQL_ROW row = mysql_fetch_row(res.get());
     std::string user_id = row ? row[0] : "";        // 获取 user_id
     std::string hash_password = row ? row[1] : "";  // 获取哈希密码
-
-    mysql_free_result(res);
 
     // 验证密码
     if (!BCrypt::validatePassword(user_password, hash_password)) {
@@ -170,10 +165,9 @@ crow::response getUser(const crow::request& req) {
         return crow::response(500, result);
     }
 
-    MYSQL_RES* res = mysql_store_result(conn.get());
-    MYSQL_ROW row = mysql_fetch_row(res);
+    std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
+    MYSQL_ROW row = mysql_fetch_row(res.get());
     if (!row) {
-        mysql_free_result(res);
         result["code"] = 0;
         result["msg"] = "用户ID错误";
         return crow::response(404, result);
@@ -186,7 +180,6 @@ crow::response getUser(const crow::request& req) {
     result["data"]["user_name"] = row[1];
     result["data"]["user_phone"] = row[2];
 
-    mysql_free_result(res);
     return crow::response(200, result);
 }
 
@@ -259,9 +252,9 @@ crow::response updateUser(const crow::request& req) {
         result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
-    MYSQL_RES* res = mysql_store_result(conn.get());
-    if (res && mysql_num_rows(res) != 0) {
-        if (res) mysql_free_result(res);
+
+    std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
+    if (res && mysql_num_rows(res.get()) != 0) {
         result["code"] = 0;
         result["msg"] = "用户名已存在";
         return crow::response(409, result);
