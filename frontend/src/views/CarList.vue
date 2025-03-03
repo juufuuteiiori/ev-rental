@@ -260,8 +260,8 @@ export default {
       this.currentPage = page;
     },
 
-    getImageUrl(imagePath) {
-      return `http://localhost:8081/static/${imagePath}`;
+    getImageUrl(path) {
+      return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
     },
   },
 };

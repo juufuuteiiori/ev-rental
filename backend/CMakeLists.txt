@@ -69,6 +69,8 @@ add_executable(
     server/crow_server.cpp
     server/handlers/vehicle_handler.cpp
     server/handlers/user_handler.cpp
+    server/handlers/image_handler.cpp
+    server/handlers/order_handler.cpp
     server/utils/jwt_utils.cpp)
 
 # 链接所有库

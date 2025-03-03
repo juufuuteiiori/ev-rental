@@ -4,6 +4,8 @@
 
 #include <csignal>
 
+#include "handlers/image_handler.h"
+#include "handlers/order_handler.h"
 #include "handlers/user_handler.h"
 #include "handlers/vehicle_handler.h"
 #include "middleware/cors_middleware.h"
@@ -50,25 +52,17 @@ void runCrow() {
     // 修改账号信息 API
     CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::POST)(updateUser);
 
+    // 获取账号订单信息 API
+    CROW_ROUTE(app, "/orders").methods(crow::HTTPMethod::GET)(getOrders);
+
+    // 获取订单信息 API
+    CROW_ROUTE(app, "/order").methods(crow::HTTPMethod::GET)(getOrderById);
+
     // 获取推荐车辆信息 API
     CROW_ROUTE(app, "/recommended").methods(crow::HTTPMethod::GET)(getRecommendedVehicleList);
 
-    CROW_ROUTE(app, "/static/<string>")
-        .methods(crow::HTTPMethod::GET)([](const crow::request&, std::string filename) {
-            // std::string path = "backend/assets/images/" + filename;
-            std::string path = std::string(ASSETS_PATH) + "/" + filename;
-            std::ifstream file(path, std::ios::binary);
-
-            if (!file) {
-                return crow::response(404, "File not found");
-            }
-
-            std::ostringstream buffer;
-            buffer << file.rdbuf();
-            crow::response res(buffer.str());
-            res.set_header("Content-Type", "image/png");
-            return res;
-        });
+    // 获取图片 API
+    CROW_ROUTE(app, "/image").methods(crow::HTTPMethod::GET)(getImage);
 
     app.port(8081).multithreaded().run();
 

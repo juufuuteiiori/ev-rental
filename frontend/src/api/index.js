@@ -72,5 +72,11 @@ export const api = {
   // 获取品牌车辆详细信息
   getModelById: (model_id) => apiClient.get("/model", { params: { model_id } }),
 
+  // 获取订单列表信息
+  getOrders: (user_id) => apiClient.get("/orders", { params: { user_id } }),
+
+  // 获取订单信息
+  getOrder: (order_id) => apiClient.get("/order", { params: { order_id } }),
+
   // 其他 API...
 };

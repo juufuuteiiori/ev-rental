@@ -88,7 +88,6 @@
 import { api } from "@/api";
 
 export default {
-  props: ["carId"],
   data() {
     return {
       car: {}, // 车辆数据
@@ -110,8 +109,8 @@ export default {
     },
   },
   methods: {
-    getImageUrl(imagePath) {
-      return `http://localhost:8081/static/${imagePath}`;
+    getImageUrl(path) {
+      return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
     },
     submitOrder() {
       if (this.car.available_number == 0) {
@@ -128,8 +127,9 @@ export default {
       }
     },
     async fetchCarDetails() {
+      const carId = this.$route.params.id;
       try {
-        const response = await api.getModelById(this.carId);
+        const response = await api.getModelById(carId);
         const { data } = response.data;
         this.car = data;
       } catch (error) {
@@ -139,7 +139,6 @@ export default {
     },
   },
   mounted() {
-    console.log("当前下单车辆ID:", this.carId);
     this.fetchCarDetails();
   },
 };

@@ -154,7 +154,7 @@ crow::response getUser(const crow::request& req) {
 
     // 验证 JWT
     auto jwt_user_id = validateJWT(token);
-    if (!jwt_user_id) {
+    if (!jwt_user_id.has_value()) {
         result["code"] = 0;
         result["msg"] = "无效的 token";
         return crow::response(401, result);  // 401 Unauthorized
@@ -168,7 +168,7 @@ crow::response getUser(const crow::request& req) {
         return crow::response(400, result);
     }
 
-    if (jwt_user_id != user_id) {
+    if (jwt_user_id.value() != std::string(user_id)) {
         result["code"] = 0;
         result["msg"] = "没有权限访问其他用户信息";
         return crow::response(400, result);

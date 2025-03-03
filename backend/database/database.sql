@@ -9,14 +9,15 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT INTO users (user_name, user_phone, user_password)
-SELECT * FROM (
-    SELECT 'alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING' UNION ALL
-    SELECT 'bob', '13800000002', '	$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C' UNION ALL
-    SELECT 'charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u' UNION ALL
-    SELECT 'david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti' UNION ALL
-    SELECT 'eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq'
-) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM users); -- 默认密码为 "password"
+VALUES
+    ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING'),
+    ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C'),
+    ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u'),
+    ('david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti'),
+    ('eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq')
+ON DUPLICATE KEY UPDATE 
+    user_phone = VALUES(user_phone), 
+    user_password = VALUES(user_password);  -- 默认密码为 "password"
 
 -- 型号表
 CREATE TABLE IF NOT EXISTS models (
@@ -74,60 +75,81 @@ CREATE TABLE IF NOT EXISTS vehicles (
 INSERT INTO vehicles (model_id, license_plate, purchase_date, location, status)
 VALUES
     -- 特斯拉 Model 3
-    (1, '川A12345', '2023-06-15', '四川成都 天府新区', '可用'),
-    (1, '川A67890', '2023-07-20', '四川成都 高新区', '已租赁'),
-    (1, '川A54321', '2023-08-05', '四川成都 锦江区', '可用'),
+    (1, '川A10001', '2023-06-15', '四川成都 天府新区', '可用'),
+    (1, '川A10002', '2023-07-20', '四川成都 高新区', '已租赁'),
+    (1, '川A10003', '2023-08-05', '四川成都 锦江区', '可用'),
 
     -- 比亚迪 汉 EV
-    (2, '川A98765', '2023-05-10', '四川成都 武侯区', '可用'),
-    (2, '川A45678', '2023-06-25', '四川成都 成华区', '已租赁'),
-    (2, '川A23456', '2023-07-30', '四川成都 金牛区', '可用'),
+    (2, '川A10004', '2023-05-10', '四川成都 武侯区', '可用'),
+    (2, '川A10005', '2023-06-25', '四川成都 成华区', '已租赁'),
+    (2, '川A10006', '2023-07-30', '四川成都 金牛区', '可用'),
 
     -- 蔚来 ET7
-    (3, '川A34567', '2023-09-10', '四川成都 青羊区', '已售出'),
-    (3, '川A56789', '2023-10-15', '四川成都 双流区', '不可用'),
+    (3, '川A10007', '2023-09-10', '四川成都 青羊区', '已售出'),
+    (3, '川A10008', '2023-10-15', '四川成都 双流区', '不可用'),
 
     -- 小鹏 P7
-    (4, '川A67890', '2023-11-05', '四川成都 新都区', '已售出'),
-    (4, '川A78901', '2023-12-12', '四川成都 温江区', '可用'),
+    (4, '川A10009', '2023-11-05', '四川成都 新都区', '已售出'),
+    (4, '川A10010', '2023-12-12', '四川成都 温江区', '可用'),
 
     -- 理想 L9
-    (5, '川A89012', '2023-06-07', '四川成都 郫都区', '可用'),
-    (5, '川A90123', '2023-07-08', '四川成都 龙泉驿区', '已租赁'),
+    (5, '川A10011', '2023-06-07', '四川成都 郫都区', '可用'),
+    (5, '川A10012', '2023-07-08', '四川成都 龙泉驿区', '已租赁'),
 
     -- 极氪 001
-    (6, '川A01234', '2023-08-09', '四川成都 青白江区', '可用'),
-    (6, '川A12346', '2023-09-20', '四川成都 都江堰市', '已售出'),
+    (6, '川A10013', '2023-08-09', '四川成都 青白江区', '可用'),
+    (6, '川A10014', '2023-09-20', '四川成都 都江堰市', '已售出'),
 
     -- 哪吒 S
-    (7, '川A23456', '2023-04-18', '四川成都 彭州市', '不可用'),
+    (7, '川A10015', '2023-04-18', '四川成都 彭州市', '不可用'),
 
     -- 广汽埃安 AION Y
-    (8, '川A34567', '2023-05-29', '四川成都 崇州市', '已租赁'),
+    (8, '川A10016', '2023-05-29', '四川成都 崇州市', '已租赁'),
 
     -- 宝马 iX3
-    (9, '川A45678', '2023-06-30', '四川成都 邛崃市', '可用'),
+    (9, '川A10017', '2023-06-30', '四川成都 邛崃市', '可用'),
 
     -- 奔驰 EQE
-    (10, '川A56789', '2023-07-25', '四川成都 金堂县', '已售出');
+    (10, '川A10018', '2023-07-25', '四川成都 金堂县', '已售出')
 ON DUPLICATE KEY UPDATE
     purchase_date = VALUES(purchase_date),
     location = VALUES(location),
     status = VALUES(status);
 
--- 订单表
 CREATE TABLE IF NOT EXISTS orders (
     order_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,          -- 订单唯一标识
-    user_id INT NOT NULL,                                      -- 外键，关联用户表，标识下单用户
-    vehicle_id INT NOT NULL,                                   -- 外键，关联电动车表，标识租赁车辆
-    order_date DATETIME NOT NULL,                              -- 订单创建时间
+    user_id INT NOT NULL,                                      -- 关联用户表，标识下单用户
+    vehicle_id INT NOT NULL,                                   -- 关联电动车表，标识租赁车辆
+    order_date DATE NOT NULL,             -- 订单创建日期
     order_type ENUM('购买', '租赁') NOT NULL,                   -- 订单类型
-    start_date DATE DEFAULT NULL,                              -- 租赁开始日期（可空）
-    end_date DATE DEFAULT NULL,                                -- 租赁结束日期（可空）
+    end_date DATE DEFAULT NULL,                                -- 租赁结束日期（仅租赁适用）
     total_price DECIMAL(10, 2) NOT NULL,                       -- 订单总金额（单位：元）
-    FOREIGN KEY (user_id) REFERENCES users(user_id),           -- 外键，关联用户表
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id)   -- 外键，关联电动车表
+    status ENUM('进行中', '已完成') NOT NULL DEFAULT '进行中',   -- 订单状态
+
+    CHECK (order_type = '购买' OR (end_date IS NOT NULL AND end_date >= order_date)), -- 确保租赁订单有日期
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE, -- 关联用户，用户删除时订单删除
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE, -- 关联车辆，车辆删除时订单删除
+    CONSTRAINT unique_user_vehicle_order UNIQUE (user_id, vehicle_id, order_date)
 );
+
+INSERT INTO orders (user_id, vehicle_id, order_date, order_type, end_date, total_price, status)
+VALUES
+    (1, 1, '2024-06-15', '租赁', '2024-12-15', 27000.00, '已完成'),
+    (5, 12, '2024-07-08', '租赁', '2025-03-08', 48000.00, '进行中'),
+    (4, 4, '2024-07-15', '租赁', '2024-10-15', 12000.00, '已完成'),
+    (3, 3, '2024-08-01', '租赁', '2024-12-01', 18000.00, '已完成'),
+    (3, 7, '2024-09-10', '购买', NULL, 450000.00, '已完成'),
+    (5, 14, '2024-09-20', '购买', NULL, 320000.00, '已完成'),
+    (4, 9, '2024-11-05', '购买', NULL, 270000.00, '已完成'),
+    (2, 5, '2025-01-25', '租赁', '2025-4-25', 10800.00, '进行中'), 
+    (1, 2, '2025-02-20', '租赁', '2025-8-20', 27000.00, '进行中'), 
+    (5, 16, '2025-02-28', '租赁', '2025-3-28', 3000.00, '进行中')
+ON DUPLICATE KEY UPDATE
+    order_date = VALUES(order_date),
+    order_type = VALUES(order_type),
+    end_date = VALUES(end_date),
+    total_price = VALUES(total_price),
+    status = VALUES(status);
 
 CREATE TABLE IF NOT EXISTS model_price_history (
     history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
