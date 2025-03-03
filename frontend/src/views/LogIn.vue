@@ -61,12 +61,12 @@
       <div class="highlights">
         <div class="highlight-item">
           <h3>🚀 轻松租车</h3>
-          <p>按天、按月租赁，随时随地用车。</p>
+          <p>按月、按年租赁，随时随地用车。</p>
         </div>
 
         <div class="highlight-item">
           <h3>💳 快速注册</h3>
-          <p>仅需用户名密码即可注册，享受专属优惠。</p>
+          <p>仅需用户名密码即可注册，享受优质服务。</p>
         </div>
 
         <div class="highlight-item">
@@ -114,7 +114,9 @@ export default {
     ...mapActions("user", ["fetchUser"]),
 
     async handleSubmit() {
-      const valid = await this.$refs.loginForm.validate();
+      const valid = await new Promise((resolve) => {
+        this.$refs.loginForm.validate((isValid) => resolve(isValid));
+      });
 
       if (!valid) {
         return;
@@ -143,11 +145,15 @@ export default {
           this.fetchUser(data.user_id);
           this.$router.push("/");
         } else {
-          this.$message.error(msg);
+          this.$message.error(msg || "发生未知错误");
         }
       } catch (error) {
         if (error.response && error.response.status === 409) {
-          this.$message.error(error.response.data.msg);
+          this.$message.error(
+            typeof error.response.data.msg === "string"
+              ? error.response.data.msg
+              : "服务器返回错误"
+          );
         } else {
           console.log(error);
           this.$message.error("网络异常，请稍后重试");
@@ -163,7 +169,7 @@ export default {
       this.isLogin = !this.isLogin;
     },
 
-    validatePasswordMatch(value, callback) {
+    validatePasswordMatch(rule, value, callback) {
       if (!this.isLogin && value !== this.form.password) {
         callback(new Error("两次密码不一致"));
       } else {

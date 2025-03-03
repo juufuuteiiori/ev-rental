@@ -132,15 +132,45 @@ crow::response loginUser(const crow::request& req) {
     return crow::response(200, result);
 }
 
-// BUG：用户只能查自己的信息。管理员需要验证
 crow::response getUser(const crow::request& req) {
     crow::json::wvalue result;
+
+    // 读取 Authorization 头部
+    std::string authorization = req.get_header_value("Authorization");
+    if (authorization.empty()) {
+        result["code"] = 0;
+        result["msg"] = "缺少 Authorization 头部";
+        return crow::response(400, result);
+    }
+
+    std::string token;
+    if (authorization.find("Bearer ") == 0) {
+        token = authorization.substr(7);  // 提取 token 部分
+    } else {
+        result["code"] = 0;
+        result["msg"] = "无效的 Authorization 格式";
+        return crow::response(400, result);
+    }
+
+    // 验证 JWT
+    auto jwt_user_id = validateJWT(token);
+    if (!jwt_user_id) {
+        result["code"] = 0;
+        result["msg"] = "无效的 token";
+        return crow::response(401, result);  // 401 Unauthorized
+    }
 
     // 获取 `user_id` 参数
     auto user_id = req.url_params.get("user_id");
     if (!user_id) {
         result["code"] = 0;
         result["msg"] = "缺少用户ID";
+        return crow::response(400, result);
+    }
+
+    if (jwt_user_id != user_id) {
+        result["code"] = 0;
+        result["msg"] = "没有权限访问其他用户信息";
         return crow::response(400, result);
     }
 
@@ -178,7 +208,7 @@ crow::response getUser(const crow::request& req) {
     result["msg"] = "查询成功";
     result["data"]["user_id"] = row[0];
     result["data"]["user_name"] = row[1];
-    result["data"]["user_phone"] = row[2];
+    result["data"]["user_phone"] = row[2] ? row[2] : "";
 
     return crow::response(200, result);
 }
@@ -204,7 +234,7 @@ crow::response updateUser(const crow::request& req) {
     }
 
     // 验证 JWT
-    auto jwt_user_id = validateJWT(token);  // 需要实现此函数，验证 token 是否有效
+    auto jwt_user_id = validateJWT(token);
     if (!jwt_user_id) {
         result["code"] = 0;
         result["msg"] = "无效的 token";

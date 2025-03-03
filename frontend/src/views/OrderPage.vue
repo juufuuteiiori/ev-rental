@@ -1,10 +1,10 @@
 <template>
   <div class="order-container">
     <el-card class="order-left">
-      <img :src="car.image" class="car-image" />
+      <img :src="getImageUrl(car.image_paths[0])" class="car-image" />
       <h3>{{ car.brand_name }} {{ car.model_name }}</h3>
-      <p>购买： ¥ {{ car.salePrice }}</p>
-      <p>租赁： ¥ {{ car.rentalPrice }} / 月</p>
+      <p>购买： ¥ {{ car.purchase_price }}</p>
+      <p>租赁： ¥ {{ car.leasing_price }} / 月</p>
     </el-card>
 
     <div class="order-right">
@@ -57,7 +57,9 @@
         <div class="price-summary">
           <div class="price-info">
             <h3>价格明细</h3>
-            <p v-if="orderType === 'buy'">车辆价格：¥ {{ car.salePrice }}</p>
+            <p v-if="orderType === 'buy'">
+              车辆价格：¥ {{ car.purchase_price }}
+            </p>
             <p v-if="orderType === 'rent'">
               租赁时长：{{ rentalDuration }} 个月
             </p>
@@ -83,21 +85,13 @@
 </template>
 
 <script>
+import { api } from "@/api";
+
 export default {
   props: ["carId"],
-  mounted() {
-    console.log("当前下单车辆ID:", this.carId);
-    // 调用 API 获取车辆数据
-  },
   data() {
     return {
-      car: {
-        brand_name: "特斯拉",
-        model_name: "Model 3",
-        salePrice: 255000,
-        rentalPrice: 2500,
-        image: require("@/assets/CarList/byd_sl.jpg"),
-      },
+      car: {}, // 车辆数据
       orderType: "buy",
       rentalDuration: 1,
       insurance: false,
@@ -109,15 +103,22 @@ export default {
     totalPrice() {
       let price =
         this.orderType === "buy"
-          ? this.car.salePrice
-          : this.car.rentalPrice * this.rentalDuration;
+          ? this.car.purchase_price
+          : this.car.leasing_price * this.rentalDuration;
       if (this.insurance) price += 2000;
       return price;
     },
   },
   methods: {
+    getImageUrl(imagePath) {
+      return `http://localhost:8081/static/${imagePath}`;
+    },
     submitOrder() {
-      this.$message.success("订单已提交！");
+      if (this.car.available_number == 0) {
+        this.$message.error("该车型库存不足，订单提交失败。");
+      } else {
+        this.$message.success("订单已提交！");
+      }
     },
     goBack() {
       if (window.history.length > 1) {
@@ -126,6 +127,20 @@ export default {
         this.$router.push("/"); // 如果没有上一页，跳转到首页
       }
     },
+    async fetchCarDetails() {
+      try {
+        const response = await api.getModelById(this.carId);
+        const { data } = response.data;
+        this.car = data;
+      } catch (error) {
+        console.error("获取车辆信息失败", error);
+        this.car = null;
+      }
+    },
+  },
+  mounted() {
+    console.log("当前下单车辆ID:", this.carId);
+    this.fetchCarDetails();
   },
 };
 </script>

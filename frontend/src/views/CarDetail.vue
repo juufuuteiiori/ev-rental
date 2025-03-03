@@ -64,6 +64,7 @@ export default {
   name: "CarDetail",
   data() {
     return {
+      carId: null,
       car: {}, // 车辆数据
     };
   },
@@ -73,16 +74,15 @@ export default {
     },
 
     async fetchCarDetails() {
-      const carId = this.$route.params.id;
+      this.carId = this.$route.params.id;
       try {
-        const response = await api.getModelById(carId);
+        const response = await api.getModelById(this.carId);
         const { data } = response.data;
         this.car = data;
       } catch (error) {
         console.error("获取车辆信息失败", error);
         this.car = null;
       }
-      console.log(this.car);
 
       // 渲染图表
       this.renderRadarChart();
@@ -222,7 +222,7 @@ export default {
     },
 
     handleBuy() {
-      this.$router.push(`/order/${this.car.model_id}`);
+      this.$router.push(`/order/${this.carId}`);
     },
   },
   mounted() {

@@ -6,6 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_WARN_DEPRECATED
     OFF
     CACHE BOOL "" FORCE)
+set(CMAKE_BUILD_TYPE Debug) # 设置构建类型为 Debug
 
 add_definitions(-DDBCONFIG_PATH=\"../database/config.json\")
 add_definitions(-DASSETS_PATH="${CMAKE_SOURCE_DIR}/assets/images")
