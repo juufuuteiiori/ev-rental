@@ -23,6 +23,13 @@
           header-align="center"
         ></el-table-column>
         <el-table-column
+          prop="brand_name"
+          label="品牌"
+          :flex-grow="1"
+          align="center"
+          header-align="center"
+        ></el-table-column>
+        <el-table-column
           prop="model_name"
           label="车型"
           :flex-grow="1"
@@ -70,15 +77,20 @@
         <el-descriptions-item label="订单日期">{{
           selectedOrder.order_date
         }}</el-descriptions-item>
-        <el-descriptions-item label="车型"
+        <el-descriptions-item label="订单类型">{{
+          selectedOrder.order_type
+        }}</el-descriptions-item>
+        <el-descriptions-item label="品牌"
           >{{ selectedOrder.brand_name }}
-          {{ selectedOrder.model_name }}</el-descriptions-item
-        >
+        </el-descriptions-item>
+        <el-descriptions-item label="车型">{{
+          selectedOrder.model_name
+        }}</el-descriptions-item>
         <el-descriptions-item label="车牌号">{{
           selectedOrder.license_plate
         }}</el-descriptions-item>
-        <el-descriptions-item label="订单类型">{{
-          selectedOrder.order_type
+        <el-descriptions-item label="总金额">{{
+          selectedOrder.total_price
         }}</el-descriptions-item>
         <el-descriptions-item
           v-if="selectedOrder.order_type === '租赁'"
@@ -86,9 +98,6 @@
         >
           {{ selectedOrder.end_date }}
         </el-descriptions-item>
-        <el-descriptions-item label="总金额">{{
-          selectedOrder.total_price
-        }}</el-descriptions-item>
       </el-descriptions>
       <span slot="footer">
         <el-button @click="dialogVisible = false">关闭</el-button>
