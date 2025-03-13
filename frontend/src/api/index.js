@@ -81,5 +81,9 @@ export const api = {
   // 提交订单信息
   submitOrder: (orderData) => apiClient.post("/orders", orderData),
 
+  // 确认订单
+  orderDone: (order_id) =>
+    apiClient.get("/orderDone", { params: { order_id } }),
+
   // 其他 API...
 };

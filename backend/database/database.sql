@@ -4,17 +4,19 @@ USE ev_rental_database;
 CREATE TABLE IF NOT EXISTS users (
     user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,           -- 用户的唯一标识
     user_name VARCHAR(50) NOT NULL UNIQUE,                     -- 用户名
-    user_phone VARCHAR(15) UNIQUE,                    -- 用户的手机号
-    user_password VARCHAR(255) NOT NULL                        -- 用户的登录密码
+    user_phone VARCHAR(15) UNIQUE,                             -- 用户的手机号
+    user_password VARCHAR(255) NOT NULL,                       -- 用户的登录密码
+    role ENUM('用户', '管理员') NOT NULL DEFAULT '用户'         -- 权限管理 
 );
 
-INSERT INTO users (user_name, user_phone, user_password)
+INSERT INTO users (user_name, user_phone, user_password, role)
 VALUES
-    ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING'),
-    ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C'),
-    ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u'),
-    ('david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti'),
-    ('eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq')
+    ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING', '用户'),
+    ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C', '用户'),
+    ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u', '用户'),
+    ('david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti', '用户'),
+    ('eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '用户'),
+    ('iori', '13800000006', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '管理员')
 ON DUPLICATE KEY UPDATE 
     user_phone = VALUES(user_phone), 
     user_password = VALUES(user_password);  -- 默认密码为 "password"

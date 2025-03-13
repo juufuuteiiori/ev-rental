@@ -60,7 +60,7 @@ crow::response registerUser(const crow::request& req) {
     }
 
     int user_id = mysql_insert_id(conn.get());
-    std::string token = generateJWT(user_name);
+    std::string token = generateJWT(user_name, "user");
 
     result["code"] = 1;
     result["msg"] = "注册成功";
@@ -96,7 +96,7 @@ crow::response loginUser(const crow::request& req) {
     mysql_real_escape_string(conn.get(), safe_name, user_name.c_str(), user_name.length());
 
     // 查询数据库，获取存储的哈希密码
-    std::string check_query = "SELECT user_id, user_password FROM users WHERE user_name = '" +
+    std::string check_query = "SELECT user_id, user_password, role FROM users WHERE user_name = '" +
                               std::string(safe_name) + "'";
 
     if (mysql_query(conn.get(), check_query.c_str()) != 0) {
@@ -116,6 +116,7 @@ crow::response loginUser(const crow::request& req) {
     MYSQL_ROW row = mysql_fetch_row(res.get());
     std::string user_id = row ? row[0] : "";        // 获取 user_id
     std::string hash_password = row ? row[1] : "";  // 获取哈希密码
+    std::string role = row ? row[2] : "";           // 权限信息
 
     // 验证密码
     if (!BCrypt::validatePassword(user_password, hash_password)) {
@@ -123,7 +124,7 @@ crow::response loginUser(const crow::request& req) {
         result["msg"] = "用户名或密码错误";
         return crow::response(409, result);
     }
-    std::string token = generateJWT(user_id);
+    std::string token = generateJWT(user_id, role);
 
     result["code"] = 1;
     result["msg"] = "登录成功";
@@ -153,12 +154,13 @@ crow::response getUser(const crow::request& req) {
     }
 
     // 验证 JWT
-    auto jwt_user_id = validateJWT(token);
-    if (!jwt_user_id.has_value()) {
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result.has_value()) {
         result["code"] = 0;
         result["msg"] = "无效的 token";
         return crow::response(401, result);  // 401 Unauthorized
     }
+    auto jwt_user_id = jwt_result->first;
 
     // 获取 `user_id` 参数
     auto user_id = req.url_params.get("user_id");
@@ -168,7 +170,7 @@ crow::response getUser(const crow::request& req) {
         return crow::response(400, result);
     }
 
-    if (jwt_user_id.value() != std::string(user_id)) {
+    if (jwt_user_id != std::string(user_id)) {
         result["code"] = 0;
         result["msg"] = "没有权限访问其他用户信息";
         return crow::response(400, result);
@@ -187,8 +189,8 @@ crow::response getUser(const crow::request& req) {
     mysql_real_escape_string(conn.get(), safe_id, user_id, strlen(user_id));
 
     // 查询用户信息
-    std::string query =
-        "SELECT user_id, user_name, user_phone FROM users WHERE user_id = " + std::string(safe_id);
+    std::string query = "SELECT user_id, user_name, user_phone, role FROM users WHERE user_id = " +
+                        std::string(safe_id);
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["code"] = 0;
         result["msg"] = "数据库错误";
@@ -209,6 +211,7 @@ crow::response getUser(const crow::request& req) {
     result["data"]["user_id"] = row[0];
     result["data"]["user_name"] = row[1];
     result["data"]["user_phone"] = row[2] ? row[2] : "";
+    result["data"]["role"] = row[3] ? row[3] : "";
 
     return crow::response(200, result);
 }
@@ -234,12 +237,13 @@ crow::response updateUser(const crow::request& req) {
     }
 
     // 验证 JWT
-    auto jwt_user_id = validateJWT(token);
-    if (!jwt_user_id) {
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result) {
         result["code"] = 0;
         result["msg"] = "无效的 token";
         return crow::response(401, result);  // 401 Unauthorized
     }
+    auto jwt_user_id = jwt_result->first;
 
     // 解析 JSON 请求
     auto body = crow::json::load(req.body);
@@ -249,7 +253,7 @@ crow::response updateUser(const crow::request& req) {
         return crow::response(400, result);
     }
 
-    std::string user_id = jwt_user_id.value();
+    std::string user_id = jwt_user_id;
     std::string user_name = body["user_name"].s();
 
     std::string user_phone =

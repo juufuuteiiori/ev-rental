@@ -22,8 +22,8 @@ crow::response getOrders(const crow::request& req) {
     }
 
     // 验证 JWT
-    auto jwt_user_id = validateJWT(token);
-    if (!jwt_user_id) {
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result) {
         result["msg"] = "无效的 token";
         return crow::response(401, result);  // 401 Unauthorized
     }
@@ -34,6 +34,9 @@ crow::response getOrders(const crow::request& req) {
         result["msg"] = "缺少用户ID";
         return crow::response(400, result);
     }
+
+    auto jwt_user_id = jwt_result->first;
+    auto jwt_role = jwt_result->second;
 
     if (jwt_user_id != user_id) {
         result["msg"] = "没有权限访问其他用户订单";
@@ -54,12 +57,11 @@ crow::response getOrders(const crow::request& req) {
     // 查询订单信息
     std::string query =
         "SELECT o.order_id, o.order_date, m.brand_name, m.model_name, v.license_plate, "
-        "o.order_type, o.status "
+        "o.order_type, o.status, o.user_id "
         "FROM orders o "
         "JOIN vehicles v ON o.vehicle_id = v.vehicle_id "
-        "JOIN models m ON v.model_id = m.model_id "
-        "WHERE o.user_id = '" +
-        std::string(safe_id) + "'";
+        "JOIN models m ON v.model_id = m.model_id";
+    if (jwt_role == "用户") query += " WHERE o.user_id = '" + std::string(safe_id) + "'";
 
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["msg"] = "数据库错误";
@@ -84,6 +86,7 @@ crow::response getOrders(const crow::request& req) {
         order["license_plate"] = row[4];
         order["order_type"] = row[5];
         order["order_status"] = row[6];
+        order["user_id"] = row[7];
         orders.push_back(std::move(order));
     }
     result["orders"] = std::move(orders);
@@ -110,11 +113,13 @@ crow::response getOrderById(const crow::request& req) {
     }
 
     // 验证 JWT
-    auto jwt_user_id = validateJWT(token);
-    if (!jwt_user_id) {
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result) {
         result["msg"] = "无效的 token";
         return crow::response(401, result);  // 401 Unauthorized
     }
+    auto jwt_user_id = jwt_result->first;
+    auto jwt_role = jwt_result->second;
 
     // 获取 `order_id` 参数
     auto order_id = req.url_params.get("order_id");
@@ -137,10 +142,11 @@ crow::response getOrderById(const crow::request& req) {
     // 查询订单信息
     std::string query =
         "SELECT o.user_id, o.order_date, m.brand_name, m.model_name, v.license_plate, "
-        "o.order_type, o.end_date, o.total_price, o.status "
+        "o.order_type, o.end_date, o.total_price, o.status, u.user_name, u.user_phone "
         "FROM orders o "
         "JOIN vehicles v ON o.vehicle_id = v.vehicle_id "
         "JOIN models m ON v.model_id = m.model_id "
+        "JOIN users u ON u.user_id = o.user_id "
         "WHERE o.order_id = '" +
         std::string(safe_id) + "'";
 
@@ -159,11 +165,12 @@ crow::response getOrderById(const crow::request& req) {
     MYSQL_ROW row = mysql_fetch_row(res.get());
 
     auto user_id = row[0];
-    if (jwt_user_id.value() != std::string(user_id)) {
+    if (jwt_role == "用户" && jwt_user_id != std::string(user_id)) {
         result["msg"] = "没有权限访问其他用户订单";
         return crow::response(400, result);
     }
 
+    order["user_id"] = row[0];
     order["order_date"] = row[1];
     order["brand_name"] = row[2];
     order["model_name"] = row[3];
@@ -172,6 +179,8 @@ crow::response getOrderById(const crow::request& req) {
     order["end_date"] = row[6];
     order["total_price"] = row[7];
     order["order_status"] = row[8];
+    order["user_name"] = row[9];
+    order["user_phone"] = row[10];
 
     result["order"] = std::move(order);
 
@@ -197,10 +206,17 @@ crow::response submitOrder(const crow::request& req) {
     }
 
     // 验证 JWT
-    auto jwt_user_id = validateJWT(token);
-    if (!jwt_user_id) {
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result) {
         result["msg"] = "无效的 token";
         return crow::response(401, result);  // 401 Unauthorized
+    }
+    auto jwt_user_id = jwt_result->first;
+    auto jwt_role = jwt_result->second;
+
+    if (jwt_role == "管理员") {
+        result["msg"] = "管理员无法下单";
+        return crow::response(401, result);
     }
 
     // 解析 JSON 请求
@@ -225,7 +241,7 @@ crow::response submitOrder(const crow::request& req) {
             ? body["rentalDuration"].i()
             : 0;
 
-    if (user_id != jwt_user_id.value()) {
+    if (user_id != jwt_user_id) {
         result["msg"] = "表单信息错误";
         return crow::response(400, result);
     }
@@ -285,9 +301,9 @@ crow::response submitOrder(const crow::request& req) {
         "', '" + std::string(safe_orderType) + "', '" + std::string(safe_end_date) + "', " +
         totalPrice + ", '进行中')";
 
-    std::cout << getVehicleSql << std::endl;
-    std::cout << updateVehicleSql << std::endl;
-    std::cout << addOrderSql << std::endl;
+    // std::cout << getVehicleSql << std::endl;
+    // std::cout << updateVehicleSql << std::endl;
+    // std::cout << addOrderSql << std::endl;
 
     if (mysql_query(conn.get(), addOrderSql.c_str()) != 0) {
         result["msg"] = "添加语句错误";
@@ -295,5 +311,96 @@ crow::response submitOrder(const crow::request& req) {
     }
 
     result["msg"] = "订单提交成功";
+    return crow::response(200, result);
+}
+
+crow::response orderDone(const crow::request& req) {
+    crow::json::wvalue result;
+
+    // 读取 Authorization 头部
+    std::string authorization = req.get_header_value("Authorization");
+    if (authorization.empty()) {
+        result["msg"] = "缺少 Authorization 头部";
+        return crow::response(400, result);
+    }
+
+    std::string token;
+    if (authorization.find("Bearer ") == 0) {
+        token = authorization.substr(7);  // 提取 token 部分
+    } else {
+        result["msg"] = "无效的 Authorization 格式";
+        return crow::response(400, result);
+    }
+
+    // 验证 JWT
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result) {
+        result["msg"] = "无效的 token";
+        return crow::response(401, result);  // 401 Unauthorized
+    }
+    auto jwt_user_id = jwt_result->first;
+    auto jwt_role = jwt_result->second;
+
+    // 获取 `order_id` 参数
+    auto order_id = req.url_params.get("order_id");
+    if (!order_id) {
+        result["msg"] = "缺少订单ID";
+        return crow::response(400, result);
+    }
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    // 防止 SQL 注入
+    char safe_id[10];
+    mysql_real_escape_string(conn.get(), safe_id, order_id, strlen(order_id));
+
+    // 查询订单信息
+    std::string query =
+        "SELECT o.user_id, o.order_type, o.status "
+        "FROM orders o "
+        "WHERE o.order_id = '" +
+        std::string(safe_id) + "'";
+
+    if (mysql_query(conn.get(), query.c_str()) != 0) {
+        result["msg"] = "数据库查询错误";
+        return crow::response(500, result);
+    }
+
+    std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
+    if (!res || mysql_num_rows(res.get()) == 0) {
+        result["msg"] = "查询结果为空";
+        return crow::response(200, result);
+    }
+
+    crow::json::wvalue order;
+    MYSQL_ROW row = mysql_fetch_row(res.get());
+
+    auto user_id = row[0];
+    if (jwt_role == "用户" && jwt_user_id != std::string(user_id)) {
+        result["msg"] = "没有权限访问其他用户订单";
+        return crow::response(400, result);
+    }
+
+    auto order_type = row[1];
+    auto status = row[2];
+    if (std::string(order_type) == "租赁" || std::string(status) == "已完成") {
+        result["msg"] = "表单信息有误";
+        return crow::response(400, result);
+    }
+
+    std::string doneQuery =
+        "UPDATE orders SET status = '已完成' WHERE order_id = '" + std::string(safe_id) + "'";
+
+    if (mysql_query(conn.get(), doneQuery.c_str()) != 0) {
+        result["msg"] = "数据库执行错误";
+        return crow::response(500, result);
+    }
+
+    result["msg"] = "订单确认成功";
     return crow::response(200, result);
 }

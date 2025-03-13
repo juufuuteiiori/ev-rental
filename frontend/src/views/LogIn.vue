@@ -4,10 +4,10 @@
     <el-card class="login-card">
       <h2 class="login-title">{{ isLogin ? "账号登录" : "账号注册" }}</h2>
 
-      <el-radio-group v-model="usertype" class="user-type">
+      <!-- <el-radio-group v-model="usertype" class="user-type">
         <el-radio-button label="用户"></el-radio-button>
         <el-radio-button label="员工"></el-radio-button>
-      </el-radio-group>
+      </el-radio-group> -->
 
       <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px">
         <el-form-item :label="computedLabel" prop="username">
@@ -122,11 +122,6 @@ export default {
         return;
       }
 
-      if (this.usertype === "员工") {
-        this.$message.error("员工登录逻辑，暂未实现");
-        return;
-      }
-
       try {
         const requestData = {
           user_name: this.form.username,
@@ -227,7 +222,7 @@ export default {
 
 .login-title {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 80px;
 }
 
 .user-type {

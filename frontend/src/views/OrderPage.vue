@@ -181,8 +181,9 @@ export default {
 
       console.log(orderData);
       try {
-        const response = await api.submitOrder(orderData);
+        await api.submitOrder(orderData);
         this.$message.success("提交成功！");
+        this.$router.push("/orderlist");
       } catch (error) {
         this.$message.error("提交失败！");
       }

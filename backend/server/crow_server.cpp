@@ -61,6 +61,9 @@ void runCrow() {
     // 提交订单信息 API
     CROW_ROUTE(app, "/orders").methods(crow::HTTPMethod::POST)(submitOrder);
 
+    // 确认订单 API
+    CROW_ROUTE(app, "/orderDone").methods(crow::HTTPMethod::GET)(orderDone);
+
     // 获取推荐车辆信息 API
     CROW_ROUTE(app, "/recommended").methods(crow::HTTPMethod::GET)(getRecommendedVehicleList);
 

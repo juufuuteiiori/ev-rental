@@ -8,11 +8,69 @@
 
     <!-- 用户已登录，显示订单表格 -->
     <div v-else>
+      <el-card class="filter-bar">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-date-picker
+              v-model="filters.dateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="yyyy-MM-dd"
+              value-format="yyyy-MM-dd"
+              clearable
+              class="custom-select"
+            />
+          </el-col>
+
+          <el-col :span="5">
+            <el-select
+              v-model="filters.brand"
+              placeholder="选择品牌"
+              clearable
+              class="custom-select"
+            >
+              <el-option
+                v-for="brand in this.brands"
+                :key="brand"
+                :label="brand"
+                :value="brand"
+              />
+            </el-select>
+          </el-col>
+
+          <el-col :span="5">
+            <el-select
+              v-model="filters.order_type"
+              placeholder="选择订单类型"
+              clearable
+              class="custom-select"
+            >
+              <el-option label="租赁" value="租赁"></el-option>
+              <el-option label="购买" value="购买"></el-option>
+            </el-select>
+          </el-col>
+
+          <el-col :span="5">
+            <el-select
+              v-model="filters.status"
+              placeholder="选择订单状态"
+              clearable
+              class="custom-select"
+            >
+              <el-option label="进行中" value="进行中"></el-option>
+              <el-option label="已完成" value="已完成"></el-option>
+            </el-select>
+          </el-col>
+        </el-row>
+      </el-card>
+
       <el-table
         :data="paginatedOrders"
         border
         stripe
-        style="width: 100%; min-height: 288px"
+        style="margin: 5%; width: 90%; min-height: 288px"
         @row-click="openOrderDetail"
       >
         <el-table-column
@@ -23,22 +81,16 @@
           header-align="center"
         ></el-table-column>
         <el-table-column
+          v-if="isAdmin"
+          prop="user_id"
+          label="用户编号"
+          :flex-grow="1"
+          align="center"
+          header-align="center"
+        ></el-table-column>
+        <el-table-column
           prop="brand_name"
           label="品牌"
-          :flex-grow="1"
-          align="center"
-          header-align="center"
-        ></el-table-column>
-        <el-table-column
-          prop="model_name"
-          label="车型"
-          :flex-grow="1"
-          align="center"
-          header-align="center"
-        ></el-table-column>
-        <el-table-column
-          prop="license_plate"
-          label="车牌号"
           :flex-grow="1"
           align="center"
           header-align="center"
@@ -63,7 +115,7 @@
         <el-pagination
           background
           layout="prev, pager, next"
-          :total="orders.length"
+          :total="filteredOrders.length"
           :page-size="pageSize"
           :current-page="currentPage"
           @current-change="changePage"
@@ -79,6 +131,15 @@
         }}</el-descriptions-item>
         <el-descriptions-item label="订单类型">{{
           selectedOrder.order_type
+        }}</el-descriptions-item>
+        <el-descriptions-item label="用户编号" v-if="isAdmin">{{
+          selectedOrder.user_id
+        }}</el-descriptions-item>
+        <el-descriptions-item label="用户名" v-if="isAdmin">{{
+          selectedOrder.user_name
+        }}</el-descriptions-item>
+        <el-descriptions-item label="用户手机" v-if="isAdmin">{{
+          selectedOrder.user_phone
         }}</el-descriptions-item>
         <el-descriptions-item label="品牌"
           >{{ selectedOrder.brand_name }}
@@ -100,6 +161,9 @@
         </el-descriptions-item>
       </el-descriptions>
       <span slot="footer">
+        <el-button v-if="orderCheck" type="danger" @click="orderDone"
+          >完成订单</el-button
+        >
         <el-button @click="dialogVisible = false">关闭</el-button>
       </span>
     </el-dialog>
@@ -108,11 +172,19 @@
 
 <script>
 import { api } from "@/api";
-import { mapState } from "vuex";
+import { mapState, mapActions } from "vuex";
 
 export default {
   data() {
     return {
+      // 筛选项
+      filters: {
+        brand: "",
+        order_type: "",
+        status: "",
+        dateRange: null,
+      },
+
       isLoggedIn: false, // 是否已登录
       orders: [], // 订单数据
       dialogVisible: false, // 弹窗状态
@@ -125,9 +197,43 @@ export default {
   },
 
   computed: {
-    ...mapState("user", ["userInfo"]),
+    ...mapState("cars", ["brands"]),
+    isAdmin() {
+      return this.$store.state.user.userInfo.role === "管理员";
+    },
+    orderCheck() {
+      return (
+        this.selectedOrder.order_status === "进行中" &&
+        this.selectedOrder.order_type === "购买"
+      );
+    },
+
+    filteredOrders() {
+      return this.orders
+        .filter(
+          (order) =>
+            !this.filters.dateRange ||
+            (new Date(this.filters.dateRange[0]) <=
+              new Date(order.order_date) &&
+              new Date(order.order_date) <= new Date(this.filters.dateRange[1]))
+        )
+        .filter(
+          (order) =>
+            !this.filters.brand || order.brand_name === this.filters.brand
+        )
+        .filter(
+          (order) =>
+            !this.filters.order_type ||
+            order.order_type === this.filters.order_type
+        )
+        .filter(
+          (order) =>
+            !this.filters.status || order.order_status === this.filters.status
+        );
+    },
+
     paginatedOrders() {
-      return this.orders.slice(
+      return this.filteredOrders.slice(
         (this.currentPage - 1) * this.pageSize,
         this.currentPage * this.pageSize
       );
@@ -136,11 +242,15 @@ export default {
 
   created() {
     this.checkLogin();
+    this.fetchBrands();
     if (this.isLoggedIn) {
       this.fetchOrders();
     }
   },
+
   methods: {
+    ...mapActions("cars", ["fetchBrands"]),
+
     // 检查用户是否登录
     checkLogin() {
       this.isLoggedIn = !!this.$store.state.jwt.token; // 通过 Vuex 判断是否有 JWT token
@@ -148,7 +258,9 @@ export default {
     // 获取订单列表
     async fetchOrders() {
       try {
-        const response = await api.getOrders(this.userInfo.user_id);
+        const response = await api.getOrders(
+          this.$store.state.user.userInfo.user_id
+        );
         this.orders = response.data.orders;
       } catch (error) {
         console.error("获取订单失败", error);
@@ -160,9 +272,22 @@ export default {
       try {
         const response = await api.getOrder(order_id);
         this.selectedOrder = response.data.order;
+        this.selectedOrder_id = order_id;
       } catch (error) {
         console.error("获取订单失败", error);
         this.$message.error("无法加载订单数据");
+      }
+    },
+
+    async orderDone() {
+      this.dialogVisible = false;
+      try {
+        await api.orderDone(this.selectedOrder_id);
+        this.fetchOrders();
+        this.$message.success("确认订单成功");
+      } catch (error) {
+        console.error("确认订单失败", error);
+        this.$message.error("确认订单失败");
       }
     },
 
@@ -189,17 +314,13 @@ export default {
   display: flex;
   flex-direction: column;
   margin: 0;
-  padding: 8%;
-  height: 46.4vh;
+  padding-top: 5%;
+  min-height: 70.1vh;
 }
 .login-message {
   text-align: center;
   padding: 20px;
   margin: auto auto;
-}
-
-.el-table {
-  width: 100%; /* 让表格填充容器 */
 }
 
 .paginated-container {
@@ -221,5 +342,14 @@ export default {
 
 .descriptions-container {
   margin: 0 3%;
+}
+
+.filter-bar {
+  background-color: #f8f9fa; /* 浅灰色背景 */
+  padding: 15px;
+  padding-left: 10vw;
+  border-radius: 12px; /* 圆角 */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
+  transition: all 0.3s ease-in-out;
 }
 </style>

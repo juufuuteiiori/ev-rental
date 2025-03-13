@@ -9,7 +9,7 @@
         <nav class="nav-links">
           <router-link to="/" class="nav-item">首页</router-link>
           <router-link to="/cars" class="nav-item">租售车辆</router-link>
-          <router-link to="/orderlist" class="nav-item">我的订单</router-link>
+          <router-link to="/orderlist" class="nav-item">订单列表</router-link>
         </nav>
 
         <!-- 用户交互按钮 -->
