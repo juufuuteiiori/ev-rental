@@ -21,8 +21,8 @@
 
     <!--  搜索 & 筛选区域 -->
     <el-card class="filter-bar">
-      <el-row :gutter="20">
-        <el-col :span="5">
+      <el-row :gutter="30">
+        <el-col :span="4">
           <el-select
             v-model="filters.brand"
             placeholder="选择品牌"
@@ -38,7 +38,7 @@
           </el-select>
         </el-col>
 
-        <el-col :span="5">
+        <el-col :span="4">
           <el-select
             v-model="filters.salePrice"
             placeholder="选择销售价格区间"
@@ -82,6 +82,14 @@
               <el-button icon="el-icon-search" @click="fetchCars" />
             </template>
           </el-input>
+        </el-col>
+
+        <el-col v-if="isAdmin" :span="2">
+          <el-button @click="addModel">添加车型</el-button>
+        </el-col>
+
+        <el-col v-if="isAdmin" :span="2">
+          <el-button @click="deleteModel">删除车型</el-button>
         </el-col>
       </el-row>
     </el-card>
@@ -148,13 +156,21 @@
         @current-change="changePage"
       />
     </div>
+    <add-model-dialog ref="AddModelDialog" />
+    <delete-model-dialog ref="DeleteModelDialog" />
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from "vuex";
+import AddModelDialog from "@/components/AddModel.vue";
+import DeleteModelDialog from "@/components/DeleteModel.vue";
 
 export default {
+  components: {
+    AddModelDialog,
+    DeleteModelDialog,
+  },
   data() {
     return {
       // 筛选项
@@ -188,6 +204,10 @@ export default {
   computed: {
     // 绑定 Vuex state 到组件
     ...mapState("cars", ["cars", "brands", "recommendedCars"]),
+
+    isAdmin() {
+      return this.$store.state.user.userInfo.role === "管理员";
+    },
 
     // 计算筛选后的车辆列表
     filteredCars() {
@@ -240,6 +260,14 @@ export default {
   methods: {
     // 绑定 Vuex action 到组件
     ...mapActions("cars", ["fetchCars", "fetchBrands", "fetchRecommendedCars"]),
+
+    addModel() {
+      this.$refs.AddModelDialog.openDialog();
+    },
+
+    deleteModel() {
+      this.$refs.DeleteModelDialog.openDialog();
+    },
 
     // 价格区间筛选逻辑
     isPriceInRange(price, range) {

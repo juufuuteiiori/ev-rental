@@ -20,7 +20,7 @@
           <p><strong>动力类型：</strong> {{ car.power_type }}</p>
           <p>
             <strong>销售价格：</strong>
-            <span class="price">¥ {{ car.purchase_price }} 万</span>
+            <span class="price">¥ {{ car.purchase_price }} </span>
           </p>
           <p>
             <strong>租赁价格：</strong>
@@ -49,19 +49,27 @@
     </div>
 
     <div class="action-buttons">
-      <el-button type="primary" size="large" @click="handleBuy"
+      <el-button v-if="isAdmin" type="primary" size="large" @click="updateModel"
+        >修改信息</el-button
+      >
+      <el-button v-if="!isAdmin" type="primary" size="large" @click="handleBuy"
         >点击下单</el-button
       >
     </div>
+    <update-model-dialog ref="UpdateModelDialog" />
   </div>
 </template>
 
 <script>
 import * as echarts from "echarts";
 import { api } from "@/api";
+import UpdateModelDialog from "@/components/UpdateModel.vue";
 
 export default {
   name: "CarDetail",
+  components: {
+    UpdateModelDialog,
+  },
   data() {
     return {
       carId: null,
@@ -95,7 +103,7 @@ export default {
       const option = {
         radar: {
           indicator: [
-            { name: "续航 (km)", max: 800 },
+            { name: "续航 (km)", max: 1200 },
             { name: "充电峰值功率(kW)", max: 500 },
             { name: "加速（秒百公里）", max: 10 },
             { name: "座位数", max: 10 },
@@ -223,6 +231,16 @@ export default {
 
     handleBuy() {
       this.$router.push(`/order/${this.carId}`);
+    },
+
+    updateModel() {
+      console.log(this.car);
+      this.$refs.UpdateModelDialog.openDialog(this.car);
+    },
+  },
+  computed: {
+    isAdmin() {
+      return this.$store.state.user.userInfo.role === "管理员";
     },
   },
   mounted() {

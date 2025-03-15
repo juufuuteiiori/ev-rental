@@ -2,7 +2,7 @@
 #include "server/crow_server.h"
 
 int main(int argc, char* argv[]) {
-    initDatabase();
+    if (argc > 1 && std::string(argv[1]) == "-i") initDatabase();
 
     runCrow();
 

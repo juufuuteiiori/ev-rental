@@ -50,6 +50,12 @@ export const api = {
   // 获取品牌列表
   getBrandList: () => apiClient.get("/brands"),
 
+  // 上传品牌
+  submitModel: (modelData) => apiClient.post("/model", modelData),
+
+  // 修改品牌
+  updateModel: (modelData) => apiClient.post("/model/update", modelData),
+
   // 根据 ID 获取车辆信息
   getVehicleById: (vehicle_id) =>
     apiClient.get("/vehicles", { params: { vehicle_id } }),
@@ -84,6 +90,14 @@ export const api = {
   // 确认订单
   orderDone: (order_id) =>
     apiClient.get("/orderDone", { params: { order_id } }),
+
+  // 上传图片
+  postImage: (image) =>
+    apiClient.post("/image", image, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 
   // 其他 API...
 };

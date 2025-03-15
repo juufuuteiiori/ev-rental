@@ -45,7 +45,6 @@ crow::response registerUser(const crow::request& req) {
 
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
     if (res && mysql_num_rows(res.get()) > 0) {
-        result["code"] = 0;
         result["msg"] = "用户名已存在";
         return crow::response(409, result);
     }
@@ -54,7 +53,6 @@ crow::response registerUser(const crow::request& req) {
                                std::string(safe_name) + "', '" + std::string(safe_password) + "')";
 
     if (mysql_query(conn.get(), insert_query.c_str()) != 0) {
-        result["code"] = 0;
         result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
@@ -62,7 +60,6 @@ crow::response registerUser(const crow::request& req) {
     int user_id = mysql_insert_id(conn.get());
     std::string token = generateJWT(user_name, "user");
 
-    result["code"] = 1;
     result["msg"] = "注册成功";
     result["data"]["user_id"] = std::to_string(user_id);
     result["data"]["token"] = token;
@@ -248,7 +245,6 @@ crow::response updateUser(const crow::request& req) {
     // 解析 JSON 请求
     auto body = crow::json::load(req.body);
     if (!body || !body.has("user_name")) {
-        result["code"] = 0;
         result["msg"] = "缺少用户名";
         return crow::response(400, result);
     }
@@ -282,14 +278,12 @@ crow::response updateUser(const crow::request& req) {
     std::string check_query =
         "SELECT * FROM users WHERE user_name = '" + std::string(safe_name) + "'";
     if (mysql_query(conn.get(), check_query.c_str()) != 0) {
-        result["code"] = 0;
         result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
     if (res && mysql_num_rows(res.get()) != 0) {
-        result["code"] = 0;
         result["msg"] = "用户名已存在";
         return crow::response(409, result);
     }
@@ -307,7 +301,6 @@ crow::response updateUser(const crow::request& req) {
         return crow::response(500, result);
     }
 
-    result["code"] = 1;
     result["msg"] = "修改成功";
     return crow::response(200, result);
 }

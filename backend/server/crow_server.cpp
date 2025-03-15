@@ -70,6 +70,15 @@ void runCrow() {
     // 获取图片 API
     CROW_ROUTE(app, "/image").methods(crow::HTTPMethod::GET)(getImage);
 
+    // 上传图片 API
+    CROW_ROUTE(app, "/image").methods(crow::HTTPMethod::POST)(postImage);
+
+    // 上传品牌
+    CROW_ROUTE(app, "/model").methods(crow::HTTPMethod::POST)(submitModel);
+
+    // 修改品牌
+    CROW_ROUTE(app, "/model/update").methods(crow::HTTPMethod::POST)(updateModel);
+
     app.port(8081).multithreaded().run();
 
     g_app = nullptr;

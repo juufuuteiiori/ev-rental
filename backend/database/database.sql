@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS models (
     storage_space INT,                                         -- 储物空间（单位：升）
     image_paths TEXT,                                          -- 图片路径（多张图片，用逗号分隔）
     recommend BOOLEAN NOT NULL DEFAULT FALSE,                  -- 是否为推荐车辆
-    UNIQUE KEY unique_brand_model (brand_name, model_name)     -- 确保同一车型同一天只能有一条记录
 );
 
 INSERT INTO models (brand_name, model_name, power_type, max_range, leasing_price, purchase_price, peak_power, acceleration, seat_count, storage_space, image_paths, recommend)
