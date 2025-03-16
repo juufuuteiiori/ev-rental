@@ -34,3 +34,34 @@ std::optional<std::pair<std::string, std::string>> validateJWT(const std::string
         return std::nullopt;
     }
 }
+std::optional<std::pair<std::string, std::string>> getJWT(const crow::request& req,
+                                                          crow::response& response) {
+    crow::json::wvalue result;
+
+    // 读取 Authorization 头部
+    std::string authorization = req.get_header_value("Authorization");
+    if (authorization.empty()) {
+        result["msg"] = "缺少 Authorization 头部";
+        response = crow::response(400, result);
+        return std::nullopt;
+    }
+
+    std::string token;
+    if (authorization.find("Bearer ") == 0) {
+        token = authorization.substr(7);  // 提取 token 部分
+    } else {
+        result["msg"] = "无效的 Authorization 格式";
+        response = crow::response(400, result);
+        return std::nullopt;
+    }
+
+    // 验证 JWT
+    auto jwt_result = validateJWT(token);
+    if (!jwt_result) {
+        result["msg"] = "无效的 token";
+        response = crow::response(400, result);
+        return std::nullopt;
+    }
+
+    return jwt_result;
+}

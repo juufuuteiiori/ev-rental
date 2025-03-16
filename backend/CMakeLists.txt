@@ -71,6 +71,7 @@ add_executable(
     server/handlers/user_handler.cpp
     server/handlers/image_handler.cpp
     server/handlers/order_handler.cpp
+    server/handlers/comment_handler.cpp
     server/utils/jwt_utils.cpp
     server/utils/time_utils.cpp)
 

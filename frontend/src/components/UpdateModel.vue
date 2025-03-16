@@ -253,8 +253,7 @@ export default {
 
       try {
         const response = await api.updateModel(this.modelData);
-        console.log(this.modelData);
-        this.$message.success("车型信息修改成功！");
+        this.$message.success(response.data.msg);
         this.dialogVisible = false;
       } catch (error) {
         this.$message.error("提交失败");

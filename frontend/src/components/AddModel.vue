@@ -239,7 +239,7 @@ export default {
 
       try {
         const response = await api.submitModel(this.modelData);
-        this.$message.success("车型信息提交成功！");
+        this.$message.success(response.data.msg);
         this.dialogVisible = false;
       } catch (error) {
         this.$message.error("提交失败");

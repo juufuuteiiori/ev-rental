@@ -4,6 +4,7 @@
 
 #include <csignal>
 
+#include "handlers/comment_handler.h"
 #include "handlers/image_handler.h"
 #include "handlers/order_handler.h"
 #include "handlers/user_handler.h"
@@ -78,6 +79,18 @@ void runCrow() {
 
     // 修改品牌
     CROW_ROUTE(app, "/model/update").methods(crow::HTTPMethod::POST)(updateModel);
+
+    // 获取评论
+    CROW_ROUTE(app, "/comments").methods(crow::HTTPMethod::GET)(getComments);
+
+    // 获取子评论
+    CROW_ROUTE(app, "/comments/sub").methods(crow::HTTPMethod::GET)(getCommentsById);
+
+    // 提交评论
+    CROW_ROUTE(app, "/comments").methods(crow::HTTPMethod::POST)(addComment);
+
+    // 删除评论
+    CROW_ROUTE(app, "/comments/del").methods(crow::HTTPMethod::GET)(delComment);
 
     app.port(8081).multithreaded().run();
 

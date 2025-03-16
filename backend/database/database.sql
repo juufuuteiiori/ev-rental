@@ -9,17 +9,13 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('用户', '管理员') NOT NULL DEFAULT '用户'         -- 权限管理 
 );
 
-INSERT INTO users (user_name, user_phone, user_password, role)
-VALUES
+INSERT INTO users (user_name, user_phone, user_password, role) VALUES
     ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING', '用户'),
     ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C', '用户'),
     ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u', '用户'),
     ('david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti', '用户'),
     ('eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '用户'),
-    ('iori', '13800000006', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '管理员')
-ON DUPLICATE KEY UPDATE 
-    user_phone = VALUES(user_phone), 
-    user_password = VALUES(user_password);  -- 默认密码为 "password"
+    ('iori', '13800000006', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '管理员'); -- 默认密码为 "password"
 
 -- 型号表
 CREATE TABLE IF NOT EXISTS models (
@@ -35,32 +31,21 @@ CREATE TABLE IF NOT EXISTS models (
     seat_count INT,                                            -- 座位数
     storage_space INT,                                         -- 储物空间（单位：升）
     image_paths TEXT,                                          -- 图片路径（多张图片，用逗号分隔）
-    recommend BOOLEAN NOT NULL DEFAULT FALSE,                  -- 是否为推荐车辆
+    recommend BOOLEAN NOT NULL DEFAULT FALSE                   -- 是否为推荐车辆
 );
 
 INSERT INTO models (brand_name, model_name, power_type, max_range, leasing_price, purchase_price, peak_power, acceleration, seat_count, storage_space, image_paths, recommend)
 VALUES
-    ('特斯拉', 'Model 3', '电动', 600, 4500.00, 280000.00, 250.00, 3.5, 5, 425, 'byd_sl.jpg,byd_sl.jpg', TRUE),
-    ('比亚迪', '汉 EV', '电动', 605, 3800.00, 250000.00, 200.00, 3.9, 5, 500, 'byd_sl.jpg,byd_sl.jpg', TRUE),
-    ('蔚来', 'ET7', '电动', 700, 5000.00, 450000.00, 280.00, 3.8, 5, 520, 'byd_sl.jpg', FALSE),
-    ('小鹏', 'P7', '电动', 670, 4000.00, 270000.00, 220.00, 4.0, 5, 450, 'byd_sl.jpg', FALSE),
-    ('理想', 'L9', '混动', 1100, 6000.00, 460000.00, 180.00, 5.5, 6, 550, 'byd_sl.jpg', TRUE),
-    ('极氪', '001', '电动', 620, 4300.00, 320000.00, 240.00, 3.8, 5, 500, 'byd_sl.jpg', FALSE),
-    ('哪吒', 'S', '电动', 650, 3500.00, 210000.00, 210.00, 4.2, 5, 400, 'byd_sl.jpg', FALSE),
-    ('广汽埃安', 'AION Y', '电动', 510, 3000.00, 160000.00, 150.00, 6.9, 5, 380, 'byd_sl.jpg', FALSE),
-    ('宝马', 'iX3', '电动', 550, 5500.00, 400000.00, 200.00, 5.0, 5, 500, 'byd_sl.jpg', TRUE),
-    ('奔驰', 'EQE', '电动', 630, 6000.00, 480000.00, 260.00, 4.5, 5, 540, 'byd_sl.jpg', TRUE)
-ON DUPLICATE KEY UPDATE
-    power_type = VALUES(power_type),
-    max_range = VALUES(max_range),
-    leasing_price = VALUES(leasing_price),
-    purchase_price = VALUES(purchase_price),
-    peak_power = VALUES(peak_power),
-    acceleration = VALUES(acceleration),
-    seat_count = VALUES(seat_count),
-    storage_space = VALUES(storage_space),
-    image_paths = VALUES(image_paths),
-    recommend = VALUES(recommend);
+    ('特斯拉', 'Model 3', '电动', 600, 4600.00, 285000.00, 250.00, 3.5, 5, 425, 'byd_sl.jpg,byd_sl.jpg', TRUE),
+    ('比亚迪', '汉 EV', '电动', 605, 3900.00, 255000.00, 200.00, 3.9, 5, 500, 'byd_sl.jpg,byd_sl.jpg', TRUE),
+    ('蔚来', 'ET7', '电动', 700, 5100.00, 460000.00, 280.00, 3.8, 5, 520, 'byd_sl.jpg', FALSE),
+    ('小鹏', 'P7', '电动', 670, 4100.00, 280000.00, 220.00, 4.0, 5, 450, 'byd_sl.jpg', FALSE),
+    ('理想', 'L9', '混动', 1100, 6100.00, 470000.00, 180.00, 5.5, 6, 550, 'byd_sl.jpg', TRUE),
+    ('极氪', '001', '电动', 620, 4400.00, 325000.00, 240.00, 3.8, 5, 500, 'byd_sl.jpg', FALSE),
+    ('哪吒', 'S', '电动', 650, 3600.00, 215000.00, 210.00, 4.2, 5, 400, 'byd_sl.jpg', FALSE),
+    ('广汽埃安', 'AION Y', '电动', 510, 3100.00, 165000.00, 150.00, 6.9, 5, 380, 'byd_sl.jpg', FALSE),
+    ('宝马', 'iX3', '电动', 550, 5600.00, 405000.00, 200.00, 5.0, 5, 500, 'byd_sl.jpg', TRUE),
+    ('奔驰', 'EQE', '电动', 630, 6100.00, 485000.00, 260.00, 4.5, 5, 540, 'byd_sl.jpg', TRUE);
 
 -- 电动车表
 CREATE TABLE IF NOT EXISTS vehicles (
@@ -111,11 +96,7 @@ VALUES
     (9, '川A10017', '2023-06-30', '四川成都 邛崃市', '可用'),
 
     -- 奔驰 EQE
-    (10, '川A10018', '2023-07-25', '四川成都 金堂县', '已售出')
-ON DUPLICATE KEY UPDATE
-    purchase_date = VALUES(purchase_date),
-    location = VALUES(location),
-    status = VALUES(status);
+    (10, '川A10018', '2023-07-25', '四川成都 金堂县', '已售出');
 
 CREATE TABLE IF NOT EXISTS orders (
     order_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,          -- 订单唯一标识
@@ -144,13 +125,7 @@ VALUES
     (4, 9, '2024-11-05', '购买', NULL, 270000.00, '已完成'),
     (2, 5, '2025-01-25', '租赁', '2025-4-25', 10800.00, '进行中'), 
     (1, 2, '2025-02-20', '租赁', '2025-8-20', 27000.00, '进行中'), 
-    (5, 16, '2025-02-28', '租赁', '2025-3-28', 3000.00, '进行中')
-ON DUPLICATE KEY UPDATE
-    order_date = VALUES(order_date),
-    order_type = VALUES(order_type),
-    end_date = VALUES(end_date),
-    total_price = VALUES(total_price),
-    status = VALUES(status);
+    (5, 16, '2025-02-28', '租赁', '2025-3-28', 3000.00, '进行中');
 
 CREATE TABLE IF NOT EXISTS model_price_history (
     history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -232,8 +207,28 @@ VALUES
     (10, '2024-02-01', 478000.00, 5950.00),
     (10, '2024-03-01', 480000.00, 6000.00),
     (10, '2024-04-01', 483000.00, 6050.00),
-    (10, '2024-05-01', 485000.00, 6100.00)
+    (10, '2024-05-01', 485000.00, 6100.00);
 
-ON DUPLICATE KEY UPDATE 
-    sale_price = VALUES(sale_price), 
-    rental_price = VALUES(rental_price);
+CREATE TABLE IF NOT EXISTS comments (
+    comment_id INT PRIMARY KEY AUTO_INCREMENT,   -- 评论唯一 ID
+    user_id INT NOT NULL,                        -- 发表评论的用户 ID
+    parent_id INT DEFAULT NULL,                  -- 父评论 ID（若为 NULL，则为主评论）
+    content TEXT NOT NULL,                       -- 评论内容
+    created_at DATE DEFAULT (CURRENT_DATE),      -- 评论时间
+    like_num INT DEFAULT 0,                          -- 点赞次数
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES comments(comment_id) ON DELETE CASCADE
+);
+
+INSERT INTO comments (user_id, parent_id, content, like_num) 
+VALUES 
+    -- 插入主评论（parent_id = NULL）
+    (1, NULL, '这篇文章很棒！', 3),
+    (2, NULL, '电动车租赁系统真有趣！', 2),
+    (3, NULL, '大家对续航里程有什么看法？', 2),
+
+    -- 插入子评论（回复主评论）
+    (2, 1, '确实！写得很好！', 0),  
+    (3, 1, '有些观点我很认同！', 0),  
+    (1, 2, '我觉得这对行业影响很大！', 0),  
+    (2, 3, '电池技术发展很快，未来续航会更长！', 0);

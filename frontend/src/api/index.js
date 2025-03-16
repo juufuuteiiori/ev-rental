@@ -99,5 +99,19 @@ export const api = {
       },
     }),
 
+  // 获取主评论
+  getComments: () => apiClient.get("/comments"),
+
+  // 获取子评论
+  getCommentsById: (comment_id) =>
+    apiClient.get("/comments/sub", { params: { comment_id } }),
+
+  // 发表评论
+  addComment: (commentData) => apiClient.post("/comments", commentData),
+
+  // 删除评论
+  delComment: (comment_id) =>
+    apiClient.get("/comments/del", { params: { comment_id } }),
+
   // 其他 API...
 };
