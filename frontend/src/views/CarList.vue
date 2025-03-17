@@ -76,10 +76,9 @@
             placeholder="请输入车型或关键词"
             clearable
             class="custom-input"
-            @keyup.enter="fetchCars"
           >
             <template #append>
-              <el-button icon="el-icon-search" @click="fetchCars" />
+              <el-button icon="el-icon-search" />
             </template>
           </el-input>
         </el-col>
@@ -286,6 +285,7 @@ export default {
     // 改变分页
     changePage(page) {
       this.currentPage = page;
+      window.scrollTo({ top: window.innerHeight * 1, behavior: "smooth" });
     },
 
     getImageUrl(path) {

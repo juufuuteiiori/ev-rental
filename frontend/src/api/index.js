@@ -113,5 +113,21 @@ export const api = {
   delComment: (comment_id) =>
     apiClient.get("/comments/del", { params: { comment_id } }),
 
+  // 点赞评论
+  addLike: (comment_id) =>
+    apiClient.get("/comments/like", { params: { comment_id } }),
+
+  // 取消点赞评论
+  delLike: (comment_id) =>
+    apiClient.get("/comments/unlike", { params: { comment_id } }),
+
+  // 不喜欢评论
+  addDislike: (comment_id) =>
+    apiClient.get("/comments/dislike", { params: { comment_id } }),
+
+  // 取消不喜欢评论
+  delDislike: (comment_id) =>
+    apiClient.get("/comments/undislike", { params: { comment_id } }),
+
   // 其他 API...
 };

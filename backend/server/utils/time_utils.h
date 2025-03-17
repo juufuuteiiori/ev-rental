@@ -5,5 +5,6 @@
 
 std::string getCurrentDate();
 std::string addMonthsToDate(const std::string& date_str, int months);
+int getDiffDay(const std::string& date_str);
 
 #endif  // TIME_UTILS_H

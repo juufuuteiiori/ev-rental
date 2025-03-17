@@ -92,6 +92,18 @@ void runCrow() {
     // 删除评论
     CROW_ROUTE(app, "/comments/del").methods(crow::HTTPMethod::GET)(delComment);
 
+    // 点赞
+    CROW_ROUTE(app, "/comments/like").methods(crow::HTTPMethod::GET)(addLike);
+
+    // 取消点赞
+    CROW_ROUTE(app, "/comments/unlike").methods(crow::HTTPMethod::GET)(delLike);
+
+    // 不喜欢
+    CROW_ROUTE(app, "/comments/dislike").methods(crow::HTTPMethod::GET)(addDislike);
+
+    // 取消不喜欢
+    CROW_ROUTE(app, "/comments/undislike").methods(crow::HTTPMethod::GET)(delDislike);
+
     app.port(8081).multithreaded().run();
 
     g_app = nullptr;

@@ -215,20 +215,53 @@ CREATE TABLE IF NOT EXISTS comments (
     parent_id INT DEFAULT NULL,                  -- 父评论 ID（若为 NULL，则为主评论）
     content TEXT NOT NULL,                       -- 评论内容
     created_at DATE DEFAULT (CURRENT_DATE),      -- 评论时间
-    like_num INT DEFAULT 0,                          -- 点赞次数
+    recent_activity_date DATE DEFAULT (CURRENT_DATE),      -- 最近活跃时间
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES comments(comment_id) ON DELETE CASCADE
 );
 
-INSERT INTO comments (user_id, parent_id, content, like_num) 
+INSERT INTO comments (user_id, parent_id, content) 
 VALUES 
     -- 插入主评论（parent_id = NULL）
-    (1, NULL, '这篇文章很棒！', 3),
-    (2, NULL, '电动车租赁系统真有趣！', 2),
-    (3, NULL, '大家对续航里程有什么看法？', 2),
+    (1, NULL, '这篇文章很棒！'),
+    (2, NULL, '电动车租赁系统真有趣！'),
+    (3, NULL, '大家对续航里程有什么看法？'),
 
     -- 插入子评论（回复主评论）
-    (2, 1, '确实！写得很好！', 0),  
-    (3, 1, '有些观点我很认同！', 0),  
-    (1, 2, '我觉得这对行业影响很大！', 0),  
-    (2, 3, '电池技术发展很快，未来续航会更长！', 0);
+    (2, 1, '确实！写得很好！'),  
+    (3, 1, '有些观点我很认同！'),  
+    (1, 2, '我觉得这对行业影响很大！'),  
+    (2, 3, '电池技术发展很快，未来续航会更长！');
+
+CREATE TABLE IF NOT EXISTS likes (
+    like_id INT PRIMARY KEY AUTO_INCREMENT,  -- 点赞唯一 ID
+    user_id INT NOT NULL,                    -- 点赞的用户 ID
+    comment_id INT NOT NULL,                 -- 点赞的评论 ID
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 点赞时间
+    UNIQUE KEY unique_like (user_id, comment_id),  -- 限制每个用户只能点赞一次
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE
+);
+
+INSERT INTO likes (user_id, comment_id)
+VALUES 
+    (1, 1),
+    (2, 1),
+    (2, 2),
+    (1, 2),
+    (3, 1),
+    (3, 2);
+
+CREATE TABLE IF NOT EXISTS dislikes (
+    dislike_id INT PRIMARY KEY AUTO_INCREMENT,  -- 不喜欢唯一 ID
+    user_id INT NOT NULL,                    -- 不喜欢的用户 ID
+    comment_id INT NOT NULL,                 -- 不喜欢的评论 ID
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 不喜欢时间
+    UNIQUE KEY unique_dislike (user_id, comment_id),  -- 限制每个用户只能不喜欢一次
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE
+);
+
+INSERT INTO dislikes (user_id, comment_id)
+VALUES 
+    (4, 1);

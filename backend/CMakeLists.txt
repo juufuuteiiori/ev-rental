@@ -73,7 +73,8 @@ add_executable(
     server/handlers/order_handler.cpp
     server/handlers/comment_handler.cpp
     server/utils/jwt_utils.cpp
-    server/utils/time_utils.cpp)
+    server/utils/time_utils.cpp
+    server/utils/recommendation_utils.cpp)
 
 # 链接所有库
 target_link_libraries(server ${Boost_LIBRARIES} mysqlclient bcrypt OpenSSL::Crypto)
