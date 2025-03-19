@@ -153,7 +153,7 @@ export default {
     },
 
     async submitOrder() {
-      if (!this.userInfo.user_id) {
+      if (this.$store.state.jwt.token == null) {
         this.$message.error("请登录账号后重新提交");
         return;
       }

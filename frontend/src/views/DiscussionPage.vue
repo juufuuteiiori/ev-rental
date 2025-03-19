@@ -18,7 +18,7 @@
 
     <el-card class="filter-bar">
       <el-row :gutter="24">
-        <el-col :span="10">
+        <el-col :span="8">
           <el-date-picker
             v-model="filters.dateRange"
             type="daterange"
@@ -32,17 +32,37 @@
           />
         </el-col>
 
-        <el-col :span="8">
+        <el-col :span="6">
           <el-input
             v-model="filters.keyword"
             placeholder="请输入用户名或关键词"
             clearable
             class="custom-input"
           >
-            <template #append>
-              <el-button icon="el-icon-search" />
-            </template>
           </el-input>
+        </el-col>
+
+        <el-col :span="5">
+          <el-select
+            v-model="filters.toxicityHide"
+            clearable
+            class="custom-select"
+          >
+            <el-option label="隐藏可能有冒犯性的评论" value="hide" />
+            <el-option label="显示可能有冒犯性的评论" value="show" />
+          </el-select>
+        </el-col>
+
+        <el-col :span="5">
+          <el-select
+            v-model="filters.sentimentShow"
+            clearable
+            class="custom-select"
+          >
+            <el-option label="所有评论" value="all" />
+            <el-option label="只看积极" value="positive" />
+            <el-option label="只看消极" value="negative" />
+          </el-select>
         </el-col>
       </el-row>
     </el-card>
@@ -144,6 +164,8 @@ export default {
       filters: {
         dateRange: null,
         keyword: "",
+        toxicityHide: "hide",
+        sentimentShow: "all",
       },
 
       newPost: { content: "", comment_id: 0 },
@@ -169,7 +191,25 @@ export default {
             !this.filters.keyword ||
             post.content.includes(this.filters.keyword) ||
             post.author.includes(this.filters.keyword)
-        );
+        )
+        .filter((post) => {
+          if (this.filters.toxicityHide == "hide" && post.toxicity_score == 1)
+            return false;
+          return true;
+        })
+        .filter((post) => {
+          if (
+            this.filters.sentimentShow == "positive" &&
+            post.sentiment_score <= 0
+          )
+            return false;
+          if (
+            this.filters.sentimentShow == "negative" &&
+            post.sentiment_score >= 0
+          )
+            return false;
+          return true;
+        });
     },
 
     paginatedPosts() {
@@ -186,10 +226,11 @@ export default {
 
   methods: {
     async fetchComments() {
-      if (this.$store.state.user.userInfo.user_id == null) {
+      if (this.$store.state.jwt.token == null) {
         this.$message.error("请先登录");
         return;
       }
+      console.log("信息：", this.$store.state.jwt.token);
 
       try {
         const response = await api.getComments();
@@ -233,7 +274,7 @@ export default {
       }
 
       newPost.user_id = this.$store.state.user.userInfo.user_id;
-      if (this.newPost.user_id == 0) {
+      if (this.$store.state.jwt.token == null) {
         this.$message.error("请先登录");
         return;
       }
@@ -406,22 +447,22 @@ export default {
   transition: all 0.3s ease-in-out;
 }
 
-.custom-input {
+.custom-input .custom-select {
   width: 100%;
   border-radius: 8px; /* 让输入框更圆润 */
 }
 
 /* 选中时的高亮效果 */
-.custom-input :deep(.el-input__inner) {
+.custom-input .custom-select:deep(.el-input__inner) {
   transition: all 0.3s ease-in-out;
   border-radius: 8px;
 }
 
-.custom-input :deep(.el-input__inner):hover {
+.custom-input .custom-select:deep(.el-input__inner):hover {
   border-color: #409eff; /* Element-UI 主题色 */
 }
 
-.custom-input :deep(.el-input__inner):focus {
+.custom-input .custom-select:deep(.el-input__inner):focus {
   border-color: #007bff; /* 选中时颜色更深 */
   box-shadow: 0 0 8px rgba(64, 158, 255, 0.3);
 }

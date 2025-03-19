@@ -57,6 +57,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(jwt-cpp)
 include_directories(${jwt-cpp_SOURCE_DIR}/include)
 
+# 添加 cpr
+FetchContent_Declare(
+    cpr
+    GIT_REPOSITORY https://github.com/libcpr/cpr.git
+    GIT_TAG master)
+FetchContent_MakeAvailable(cpr)
+include_directories(${cpr_SOURCE_DIR}/include)
+
 # 添加 include 目录
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -74,7 +82,8 @@ add_executable(
     server/handlers/comment_handler.cpp
     server/utils/jwt_utils.cpp
     server/utils/time_utils.cpp
-    server/utils/recommendation_utils.cpp)
+    server/utils/recommendation_utils.cpp
+    server/utils/nlp_utils.cpp)
 
 # 链接所有库
-target_link_libraries(server ${Boost_LIBRARIES} mysqlclient bcrypt OpenSSL::Crypto)
+target_link_libraries(server ${Boost_LIBRARIES} mysqlclient bcrypt OpenSSL::Crypto cpr)

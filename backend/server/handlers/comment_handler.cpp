@@ -2,10 +2,9 @@
 
 #include <database/database.h>
 #include <server/utils/jwt_utils.h>
+#include <server/utils/nlp_utils.h>
 #include <server/utils/recommendation_utils.h>
 #include <server/utils/time_utils.h>
-
-#include <string>
 
 crow::response getComments(const crow::request& req) {
     crow::json::wvalue result;
@@ -39,7 +38,7 @@ crow::response getComments(const crow::request& req) {
         "c.comment_id AND d.user_id = " +
         std::to_string(used_id) +
         ") AS is_disliked, COUNT(DISTINCT sub.comment_id) AS reply_num, u.role, "
-        "c.recent_activity_date "
+        "c.recent_activity_date, c.sentiment_score, c.toxicity_score "
         "FROM comments c "
         "JOIN users u ON u.user_id = c.user_id "
         "LEFT JOIN likes l ON c.comment_id = l.comment_id "
@@ -78,6 +77,8 @@ crow::response getComments(const crow::request& req) {
         comment["reply_num"] = std::stoi(row[9]);
         comment["is_admin"] = std::string(row[10]).compare("用户") == 0 ? 0 : 1;
         comment["recent_activity_date"] = row[11];
+        comment["sentiment_score"] = std::stoi(row[12]);
+        comment["toxicity_score"] = std::stoi(row[13]);
 
         comments.push_back(std::move(comment));
     }
@@ -192,10 +193,18 @@ crow::response addComment(const crow::request& req) {
     mysql_real_escape_string(conn.get(), safe_user_id, user_id.c_str(), user_id.length());
     mysql_real_escape_string(conn.get(), safe_content, content.c_str(), content.length());
 
-    std::string insert_query = "INSERT INTO comments(user_id, parent_id, content) VALUES ('" +
-                               std::string(safe_user_id) + "', " +
-                               (parent_id == 0 ? "NULL" : std::to_string(parent_id)) + ", '" +
-                               std::string(safe_content) + "');";
+    int sentiment_score = 0, toxicity_score = 0;
+    if (getSentiment(content, sentiment_score) || getToxicity(content, toxicity_score)) {
+        result["msg"] = "NLP服务器连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string insert_query =
+        "INSERT INTO comments(user_id, parent_id, content, sentiment_score, toxicity_score) VALUES "
+        "('" +
+        std::string(safe_user_id) + "', " + (parent_id == 0 ? "NULL" : std::to_string(parent_id)) +
+        ", '" + std::string(safe_content) + "', " + std::to_string(sentiment_score) + ", " +
+        std::to_string(toxicity_score) + ");";
 
     if (mysql_query(conn.get(), insert_query.c_str()) != 0) {
         result["msg"] = "数据库错误";

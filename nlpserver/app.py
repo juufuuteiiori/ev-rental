@@ -19,13 +19,13 @@ toxicity_pipe = pipeline("text-classification", model=toxicity_model_path, token
 async def analyze_sentiment(request: TextRequest):
     """ 处理情感分析请求 """
     result = sentiment_pipe(request.text)
-    return result
+    return result[0]
 
 @app.post("/toxicity")
 async def analyze_toxicity(request: TextRequest):
-    """ 处理有害言论检测请求 """
+    """ 处理冒犯性言论检测请求 """
     result = toxicity_pipe(request.text)
-    return result
+    return result[0]
 
 if __name__ == "__main__":
     import uvicorn
