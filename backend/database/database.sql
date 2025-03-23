@@ -267,3 +267,13 @@ CREATE TABLE IF NOT EXISTS dislikes (
 INSERT INTO dislikes (user_id, comment_id)
 VALUES 
     (4, 1);
+
+
+CREATE TABLE IF NOT EXISTS model_stars (
+    model_star_id INT PRIMARY KEY AUTO_INCREMENT,
+    model_id INT NOT NULL,
+    user_id INT NOT NULL,
+    UNIQUE KEY unique_model_user (model_id, user_id),
+    FOREIGN KEY (model_id) REFERENCES models(model_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);

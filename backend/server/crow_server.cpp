@@ -104,6 +104,12 @@ void runCrow() {
     // 取消不喜欢
     CROW_ROUTE(app, "/comments/undislike").methods(crow::HTTPMethod::GET)(delDislike);
 
+    // 添加收藏
+    CROW_ROUTE(app, "/model/addstar").methods(crow::HTTPMethod::GET)(addStar);
+
+    // 取消收藏
+    CROW_ROUTE(app, "/model/delstar").methods(crow::HTTPMethod::GET)(delStar);
+
     app.port(8081).multithreaded().run();
 
     g_app = nullptr;

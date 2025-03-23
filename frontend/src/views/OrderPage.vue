@@ -105,7 +105,6 @@
 
 <script>
 import { api } from "@/api";
-import { mapState } from "vuex";
 
 export default {
   data() {
@@ -136,7 +135,6 @@ export default {
     };
   },
   computed: {
-    ...mapState("user", ["userInfo"]),
     totalPrice() {
       let price =
         this.formData.orderType === "购买"
@@ -175,11 +173,10 @@ export default {
       }
 
       const orderData = this.formData;
-      orderData.model_id = this.$route.params.id;
-      orderData.user_id = this.userInfo.user_id;
+      orderData.model_id = Number(this.$route.params.id);
+      orderData.user_id = this.$store.state.user.userInfo.user_id;
       orderData.totalPrice = this.totalPrice;
 
-      console.log(orderData);
       try {
         await api.submitOrder(orderData);
         this.$message.success("提交成功！");
@@ -196,15 +193,14 @@ export default {
         this.$router.push("/"); // 如果没有上一页，跳转到首页
       }
     },
+
     async fetchCarDetails() {
       const model_id = this.$route.params.id;
       try {
         const response = await api.getModelById(model_id);
-        const { data } = response.data;
-        this.car = data;
+        this.car = response.data.vehicle;
       } catch (error) {
-        console.error("获取车辆信息失败", error);
-        this.car = null;
+        this.$message.error(error.response.data.msg);
       }
     },
   },

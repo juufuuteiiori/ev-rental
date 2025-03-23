@@ -129,5 +129,13 @@ export const api = {
   delDislike: (comment_id) =>
     apiClient.get("/comments/undislike", { params: { comment_id } }),
 
+  // 收藏车辆
+  addStar: (model_id) =>
+    apiClient.get("/model/addstar", { params: { model_id } }),
+
+  // 取消收藏车辆
+  delStar: (model_id) =>
+    apiClient.get("/model/delstar", { params: { model_id } }),
+
   // 其他 API...
 };

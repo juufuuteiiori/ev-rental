@@ -81,6 +81,7 @@ add_executable(
     server/handlers/order_handler.cpp
     server/handlers/comment_handler.cpp
     server/utils/jwt_utils.cpp
+    server/utils/param_utils.cpp
     server/utils/time_utils.cpp
     server/utils/recommendation_utils.cpp
     server/utils/nlp_utils.cpp)

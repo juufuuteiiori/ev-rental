@@ -4,11 +4,6 @@
     <el-card class="login-card">
       <h2 class="login-title">{{ isLogin ? "账号登录" : "账号注册" }}</h2>
 
-      <!-- <el-radio-group v-model="usertype" class="user-type">
-        <el-radio-button label="用户"></el-radio-button>
-        <el-radio-button label="员工"></el-radio-button>
-      </el-radio-group> -->
-
       <el-form ref="loginForm" :model="form" :rules="rules" label-width="80px">
         <el-form-item :label="computedLabel" prop="username">
           <el-input
@@ -79,7 +74,6 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
 import { api } from "@/api";
 
 export default {
@@ -110,9 +104,6 @@ export default {
     },
   },
   methods: {
-    // 绑定 Vuex action 到组件
-    ...mapActions("user", ["fetchUser"]),
-
     async handleSubmit() {
       const valid = await new Promise((resolve) => {
         this.$refs.loginForm.validate((isValid) => resolve(isValid));
@@ -132,27 +123,12 @@ export default {
           ? await api.loginUser(requestData)
           : await api.registerUser(requestData);
 
-        const { code, msg, data } = response.data;
-
-        if (code === 1) {
-          this.$message.success(`${this.isLogin ? "登录" : "注册"}成功`);
-          this.$store.dispatch("jwt/login", data.token);
-          this.fetchUser(data.user_id);
-          this.$router.push("/");
-        } else {
-          this.$message.error(msg || "发生未知错误");
-        }
+        this.$store.dispatch("jwt/login", response.data.token);
+        this.$store.dispatch("user/fetchUser", response.data.user_id);
+        this.$router.push("/");
+        this.$message.success(`${this.isLogin ? "登录" : "注册"}成功`);
       } catch (error) {
-        if (error.response && error.response.status === 409) {
-          this.$message.error(
-            typeof error.response.data.msg === "string"
-              ? error.response.data.msg
-              : "服务器返回错误"
-          );
-        } else {
-          console.log(error);
-          this.$message.error("网络异常，请稍后重试");
-        }
+        this.$message.error("网络异常，请稍后重试");
       }
     },
 

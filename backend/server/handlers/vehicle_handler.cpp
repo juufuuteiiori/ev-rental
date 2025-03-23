@@ -1,31 +1,27 @@
 #include "vehicle_handler.h"
 
 #include <database/database.h>
-#include <server/utils/jwt_utils.h>
-#include <server/utils/time_utils.h>
+#include <server/utils/utils.h>
 
 // 查询品牌列表信息
-crow::response getBrandList() {
+crow::response getBrandList(const crow::request& req) {
     crow::json::wvalue result;
 
     auto conn = getDatabaseConnection();
     if (!conn) {
-        result["code"] = 0;
         result["msg"] = "数据库连接失败";
         return crow::response(500, result);
     }
 
     std::string query = "SELECT DISTINCT brand_name FROM models";
     if (mysql_query(conn.get(), query.c_str())) {
-        result["code"] = 0;
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
     // 获取查询结果
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
-    if (!res) {
-        result["code"] = 0;
+    if (!res || mysql_num_rows(res.get()) == 0) {
         result["msg"] = "查询结果为空";
         return crow::response(500, result);
     }
@@ -37,37 +33,43 @@ crow::response getBrandList() {
         brands.push_back(row[0]);
     }
 
-    result["code"] = 1;
     result["msg"] = "成功";
-    result["data"] = std::move(brands);
+    result["brands"] = std::move(brands);
 
     return crow::response(200, result);
 }
 
 // 查询车辆列表信息
-crow::response getVehicleList() {
+crow::response getVehicleList(const crow::request& req) {
     crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    int user_id = jwt_result ? jwt_result->first : 0;
 
     auto conn = getDatabaseConnection();
     if (!conn) {
-        result["code"] = 0;
         result["msg"] = "数据库连接失败";
         return crow::response(500, result);
     }
 
     std::string query =
-        "SELECT model_id, brand_name, model_name, max_range, leasing_price, purchase_price FROM "
-        "models";
+        "SELECT m.model_id, m.brand_name, m.model_name, m.max_range, "
+        "m.leasing_price, m.purchase_price, "
+        "IF(ms.model_id IS NOT NULL, 1, 0) AS is_star "
+        "FROM models AS m "
+        "LEFT JOIN model_stars AS ms "
+        "ON m.model_id = ms.model_id AND ms.user_id = " +
+        std::to_string(user_id);
+
     if (mysql_query(conn.get(), query.c_str())) {
-        result["code"] = 0;
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
     // 获取查询结果
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
-    if (!res) {
-        result["code"] = 0;
+    if (!res || mysql_num_rows(res.get()) == 0) {
         result["msg"] = "查询结果为空";
         return crow::response(500, result);
     }
@@ -77,29 +79,28 @@ crow::response getVehicleList() {
     MYSQL_ROW row;
     while ((row = mysql_fetch_row(res.get()))) {
         crow::json::wvalue vehicle;
-        vehicle["model_id"] = row[0] ? std::stoi(row[0]) : 0;
-        vehicle["brand"] = row[1] ? row[1] : "";
-        vehicle["model"] = row[2] ? row[2] : "";
-        vehicle["range"] = row[3] ? std::stoi(row[3]) : 0;
-        vehicle["rentalPrice"] = row[4] ? std::stod(row[4]) : 0.0;
-        vehicle["salePrice"] = row[5] ? std::stod(row[5]) : 0.0;
+        vehicle["model_id"] = std::stoi(row[0]);
+        vehicle["brand"] = row[1];
+        vehicle["model"] = row[2];
+        vehicle["range"] = std::stoi(row[3]);
+        vehicle["rentalPrice"] = std::stod(row[4]);
+        vehicle["salePrice"] = std::stod(row[5]);
+        vehicle["is_star"] = std::stoi(row[6]);
 
         vehicles.push_back(std::move(vehicle));
     }
 
-    result["code"] = 1;
     result["msg"] = "成功";
-    result["data"] = std::move(vehicles);
+    result["vehicles"] = std::move(vehicles);
 
     return crow::response(200, result);
 }
 
-crow::response getRecommendedVehicleList() {
+crow::response getRecommendedVehicleList(const crow::request& req) {
     crow::json::wvalue result;
 
     auto conn = getDatabaseConnection();
     if (!conn) {
-        result["code"] = 0;
         result["msg"] = "数据库连接失败";
         return crow::response(500, result);
     }
@@ -110,15 +111,13 @@ crow::response getRecommendedVehicleList() {
         "models WHERE recommend = TRUE";
 
     if (mysql_query(conn.get(), query.c_str())) {
-        result["code"] = 0;
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
     // 获取查询结果
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
-    if (!res) {
-        result["code"] = 0;
+    if (!res || mysql_num_rows(res.get()) == 0) {
         result["msg"] = "查询结果为空";
         return crow::response(500, result);
     }
@@ -135,35 +134,36 @@ crow::response getRecommendedVehicleList() {
         }
 
         crow::json::wvalue vehicle;
-        vehicle["model_id"] = row[0] ? std::stoi(row[0]) : 0;
-        vehicle["brand_name"] = row[1] ? row[1] : "";
-        vehicle["model_name"] = row[2] ? row[2] : "";
-        vehicle["range"] = row[3] ? std::stoi(row[3]) : 0;
-        vehicle["rentalPrice"] = row[4] ? std::stod(row[4]) : 0.0;
-        vehicle["salePrice"] = row[5] ? std::stod(row[5]) : 0.0;
+        vehicle["model_id"] = std::stoi(row[0]);
+        vehicle["brand_name"] = row[1];
+        vehicle["model_name"] = row[2];
+        vehicle["range"] = std::stoi(row[3]);
+        vehicle["rentalPrice"] = std::stod(row[4]);
+        vehicle["salePrice"] = std::stod(row[5]);
         vehicle["image"] = firstImage;
 
         recommendedVehicles.push_back(std::move(vehicle));
     }
 
-    result["code"] = 1;
     result["msg"] = "成功";
-    result["data"] = std::move(recommendedVehicles);
+    result["recommendedVehicles"] = std::move(recommendedVehicles);
 
     return crow::response(200, result);
 }
 
 crow::response getVehicleDetails(const crow::request& req) {
     crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+
+    auto param_model_id = getIntParam(req, response, "model_id");
+    if (!param_model_id) {
+        return response;
+    }
+    auto model_id = param_model_id.value();
 
     auto params = req.url_params;
-    std::string model_id = params.get("model_id");
-
-    if (model_id.empty()) {
-        result["code"] = 0;
-        result["msg"] = "缺少型号编号";
-        return crow::response(400, result);
-    }
 
     // 连接数据库
     auto conn = getDatabaseConnection();
@@ -173,30 +173,24 @@ crow::response getVehicleDetails(const crow::request& req) {
         return crow::response(500, result);
     }
 
-    // 防止 SQL 注入
-    char safe_id[100];
-    mysql_real_escape_string(conn.get(), safe_id, model_id.c_str(), model_id.length());
-
     crow::json::wvalue vehicle;
 
     // 查询基本信息
     std::string query =
         "SELECT brand_name, model_name, max_range, leasing_price, purchase_price, "
         "power_type, peak_power, acceleration, seat_count, storage_space, image_paths FROM models "
-        "WHERE model_id = '" +
-        std::string(safe_id) + "'";
+        "WHERE model_id = " +
+        std::to_string(model_id);
 
     if (mysql_query(conn.get(), query.c_str())) {
-        result["code"] = 0;
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
-    if (!res) {
-        result["code"] = 0;
+    if (!res || mysql_num_rows(res.get()) == 0) {
         result["msg"] = "查询结果为空";
-        return crow::response(500, result);
+        return crow::response(404, result);  // 404 表示数据未找到
     }
 
     auto row = mysql_fetch_row(res.get());
@@ -229,17 +223,16 @@ crow::response getVehicleDetails(const crow::request& req) {
     vehicle["image_paths"] = std::move(imageListJson);
 
     // 查询可用数量
-    std::string count_query = "SELECT COUNT(*) FROM vehicles WHERE model_id = '" +
-                              std::string(safe_id) + "' AND status = '可用'";
+    std::string count_query =
+        "SELECT COUNT(*) FROM vehicles WHERE model_id = " + std::to_string(model_id) +
+        " AND status = '可用'";
     if (mysql_query(conn.get(), count_query.c_str())) {
-        result["code"] = 0;
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
     std::shared_ptr<MYSQL_RES> res2(mysql_store_result(conn.get()), mysql_free_result);
-    if (!res2) {
-        result["code"] = 0;
+    if (!res2 || mysql_num_rows(res2.get()) == 0) {
         result["msg"] = "查询结果为空";
         return crow::response(500, result);
     }
@@ -248,18 +241,16 @@ crow::response getVehicleDetails(const crow::request& req) {
 
     // 查询历史价格
     std::string price_query =
-        "SELECT record_date, sale_price, rental_price FROM model_price_history WHERE model_id = '" +
-        std::string(safe_id) + "' ORDER BY record_date ASC";
+        "SELECT record_date, sale_price, rental_price FROM model_price_history WHERE model_id = " +
+        std::to_string(model_id) + " ORDER BY record_date ASC";
 
     if (mysql_query(conn.get(), price_query.c_str())) {
-        result["code"] = 0;
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
     std::shared_ptr<MYSQL_RES> res3(mysql_store_result(conn.get()), mysql_free_result);
-    if (!res3) {
-        result["code"] = 0;
+    if (!res3 || mysql_num_rows(res3.get()) == 0) {
         result["msg"] = "查询结果为空";
         return crow::response(500, result);
     }
@@ -275,34 +266,39 @@ crow::response getVehicleDetails(const crow::request& req) {
     }
     vehicle["history_prices"] = std::move(history_prices);
 
+    vehicle["is_star"] = 0;
+
+    if (jwt_result) {
+        int user_id = jwt_result->first;
+        std::string star_query =
+            "SELECT COUNT(*) FROM model_stars WHERE user_id = " + std::to_string(user_id) +
+            " AND model_id = '" + std::to_string(model_id) + "'";
+
+        if (mysql_query(conn.get(), star_query.c_str())) {
+            result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
+            return crow::response(500, result);
+        }
+
+        std::shared_ptr<MYSQL_RES> res4(mysql_store_result(conn.get()), mysql_free_result);
+        if (res4) {
+            MYSQL_ROW row4;
+            row4 = mysql_fetch_row(res4.get());
+            if (row4 && row4[0]) vehicle["is_star"] = std::stoi(row4[0]);
+        }
+    }
+
     result["msg"] = "成功";
-    result["data"] = std::move(vehicle);
+    result["vehicle"] = std::move(vehicle);
     return crow::response(200, result);
 }
 
 crow::response submitModel(const crow::request& req) {
     crow::json::wvalue result;
+    crow::response response;
 
-    // 读取 Authorization 头部
-    std::string authorization = req.get_header_value("Authorization");
-    if (authorization.empty()) {
-        result["msg"] = "缺少 Authorization 头部";
-        return crow::response(400, result);
-    }
-
-    std::string token;
-    if (authorization.find("Bearer ") == 0) {
-        token = authorization.substr(7);  // 提取 token 部分
-    } else {
-        result["msg"] = "无效的 Authorization 格式";
-        return crow::response(400, result);
-    }
-
-    // 验证 JWT
-    auto jwt_result = validateJWT(token);
+    auto jwt_result = getJWT(req, response);
     if (!jwt_result) {
-        result["msg"] = "无效的 token";
-        return crow::response(401, result);  // 401 Unauthorized
+        return response;
     }
 
     auto jwt_role = jwt_result->second;
@@ -313,22 +309,17 @@ crow::response submitModel(const crow::request& req) {
 
     // 解析 JSON 请求
     auto body = crow::json::load(req.body);
-    if (!body || !body.has("model_brand") || !body.has("model_name") || !body.has("imageUrls") ||
-        !body.has("range") || !body.has("power_type") || !body.has("sale_price") ||
-        !body.has("rental_price") || !body.has("charging_power") || !body.has("acceleration") ||
-        !body.has("seats") || !body.has("storage_space")) {
-        result["msg"] = "表单错误，缺少必填字段";
-        return crow::response(400, result);
-    }
-
-    if (body["range"].t() != crow::json::type::Number ||
-        body["sale_price"].t() != crow::json::type::Number ||
-        body["rental_price"].t() != crow::json::type::Number ||
-        body["charging_power"].t() != crow::json::type::Number ||
-        body["acceleration"].t() != crow::json::type::Number ||
-        body["seats"].t() != crow::json::type::Number ||
-        body["storage_space"].t() != crow::json::type::Number) {
-        result["msg"] = "表单错误：某些字段必须是数字";
+    if (!body || !body.has("model_brand") || body["model_brand"].t() != crow::json::type::String ||
+        !body.has("model_name") || body["model_name"].t() != crow::json::type::String ||
+        !body.has("range") || body["range"].t() != crow::json::type::Number ||
+        !body.has("power_type") || body["power_type"].t() != crow::json::type::String ||
+        !body.has("sale_price") || body["sale_price"].t() != crow::json::type::Number ||
+        !body.has("rental_price") || body["rental_price"].t() != crow::json::type::Number ||
+        !body.has("charging_power") || body["charging_power"].t() != crow::json::type::Number ||
+        !body.has("acceleration") || body["acceleration"].t() != crow::json::type::Number ||
+        !body.has("seats") || body["seats"].t() != crow::json::type::Number ||
+        !body.has("storage_space") || body["storage_space"].t() != crow::json::type::Number) {
+        result["msg"] = "表单错误";
         return crow::response(400, result);
     }
 
@@ -346,7 +337,6 @@ crow::response submitModel(const crow::request& req) {
                 image_paths += item.s();
             }
         }
-        std::cout << image_paths << std::endl;
     }
 
     int range = body["range"].i();
@@ -360,12 +350,11 @@ crow::response submitModel(const crow::request& req) {
     // 连接数据库
     auto conn = getDatabaseConnection();
     if (!conn) {
-        result["code"] = 0;
         result["msg"] = "数据库连接失败";
         return crow::response(500, result);
     }
 
-    char safe_brand[100], safe_name[100], safe_type[100], safe_image[256];
+    char safe_brand[255], safe_name[255], safe_type[255], safe_image[255];
     mysql_real_escape_string(conn.get(), safe_brand, model_brand.c_str(), model_brand.length());
     mysql_real_escape_string(conn.get(), safe_name, model_name.c_str(), model_name.length());
     mysql_real_escape_string(conn.get(), safe_type, power_type.c_str(), power_type.length());
@@ -382,8 +371,6 @@ crow::response submitModel(const crow::request& req) {
         std::to_string(seats) + ", " + std::to_string(storage_space) + ", '" +
         std::string(safe_image) + "');";
 
-    // std::cout << insert_query << std::endl;
-
     if (mysql_query(conn.get(), insert_query.c_str()) != 0) {
         result["msg"] = "数据库错误";
         return crow::response(500, result);
@@ -397,8 +384,6 @@ crow::response submitModel(const crow::request& req) {
         std::to_string(model_id) + ", '" + date + "', " + std::to_string(sale_price) + ", " +
         std::to_string(rental_price) + ");";
 
-    // std::cout << insert_query_2 << std::endl;
-
     if (mysql_query(conn.get(), insert_query_2.c_str()) != 0) {
         result["msg"] = "数据库错误";
         return crow::response(500, result);
@@ -410,54 +395,32 @@ crow::response submitModel(const crow::request& req) {
 
 crow::response updateModel(const crow::request& req) {
     crow::json::wvalue result;
+    crow::response response;
 
-    // 读取 Authorization 头部
-    std::string authorization = req.get_header_value("Authorization");
-    if (authorization.empty()) {
-        result["msg"] = "缺少 Authorization 头部";
-        return crow::response(400, result);
-    }
-
-    std::string token;
-    if (authorization.find("Bearer ") == 0) {
-        token = authorization.substr(7);  // 提取 token 部分
-    } else {
-        result["msg"] = "无效的 Authorization 格式";
-        return crow::response(400, result);
-    }
-
-    // 验证 JWT
-    auto jwt_result = validateJWT(token);
+    auto jwt_result = getJWT(req, response);
     if (!jwt_result) {
-        result["msg"] = "无效的 token";
-        return crow::response(401, result);  // 401 Unauthorized
+        return response;
     }
 
     auto jwt_role = jwt_result->second;
     if (jwt_role != "管理员") {
-        result["msg"] = "非管理员无法上传品牌";
+        result["msg"] = "非管理员无法修改品牌";
         return crow::response(401, result);
     }
 
     // 解析 JSON 请求
     auto body = crow::json::load(req.body);
-    if (!body || !body.has("model_id") || !body.has("model_brand") || !body.has("model_name") ||
-        !body.has("imageUrls") || !body.has("range") || !body.has("power_type") ||
-        !body.has("sale_price") || !body.has("rental_price") || !body.has("charging_power") ||
-        !body.has("acceleration") || !body.has("seats") || !body.has("storage_space")) {
-        result["msg"] = "表单错误，缺少必填字段";
-        return crow::response(400, result);
-    }
-
-    if (body["model_id"].t() != crow::json::type::Number ||
-        body["range"].t() != crow::json::type::Number ||
-        body["sale_price"].t() != crow::json::type::Number ||
-        body["rental_price"].t() != crow::json::type::Number ||
-        body["charging_power"].t() != crow::json::type::Number ||
-        body["acceleration"].t() != crow::json::type::Number ||
-        body["seats"].t() != crow::json::type::Number ||
-        body["storage_space"].t() != crow::json::type::Number) {
-        result["msg"] = "表单错误：某些字段必须是数字";
+    if (!body || !body.has("model_brand") || body["model_brand"].t() != crow::json::type::String ||
+        !body.has("model_name") || body["model_name"].t() != crow::json::type::String ||
+        !body.has("range") || body["range"].t() != crow::json::type::Number ||
+        !body.has("power_type") || body["power_type"].t() != crow::json::type::String ||
+        !body.has("sale_price") || body["sale_price"].t() != crow::json::type::Number ||
+        !body.has("rental_price") || body["rental_price"].t() != crow::json::type::Number ||
+        !body.has("charging_power") || body["charging_power"].t() != crow::json::type::Number ||
+        !body.has("acceleration") || body["acceleration"].t() != crow::json::type::Number ||
+        !body.has("seats") || body["seats"].t() != crow::json::type::Number ||
+        !body.has("storage_space") || body["storage_space"].t() != crow::json::type::Number) {
+        result["msg"] = "表单错误";
         return crow::response(400, result);
     }
 
@@ -475,7 +438,6 @@ crow::response updateModel(const crow::request& req) {
                 image_paths += item.s();
             }
         }
-        std::cout << image_paths << std::endl;
     }
 
     int model_id = body["model_id"].i();
@@ -490,12 +452,11 @@ crow::response updateModel(const crow::request& req) {
     // 连接数据库
     auto conn = getDatabaseConnection();
     if (!conn) {
-        result["code"] = 0;
         result["msg"] = "数据库连接失败";
         return crow::response(500, result);
     }
 
-    char safe_brand[100], safe_name[100], safe_type[100], safe_image[256];
+    char safe_brand[255], safe_name[255], safe_type[255], safe_image[255];
     mysql_real_escape_string(conn.get(), safe_brand, model_brand.c_str(), model_brand.length());
     mysql_real_escape_string(conn.get(), safe_name, model_name.c_str(), model_name.length());
     mysql_real_escape_string(conn.get(), safe_type, power_type.c_str(), power_type.length());
@@ -513,8 +474,6 @@ crow::response updateModel(const crow::request& req) {
                                ", image_paths = '" + std::string(safe_image) +
                                "' WHERE model_id = " + std::to_string(model_id) + ";";
 
-    std::cout << update_query << std::endl;
-
     if (mysql_query(conn.get(), update_query.c_str()) != 0) {
         result["msg"] = "数据库错误";
         return crow::response(500, result);
@@ -530,13 +489,81 @@ crow::response updateModel(const crow::request& req) {
         "ON DUPLICATE KEY UPDATE "
         "sale_price = VALUES(sale_price), rental_price = VALUES(rental_price);";
 
-    std::cout << upsert_query << std::endl;
-
     if (mysql_query(conn.get(), upsert_query.c_str()) != 0) {
         result["msg"] = "数据库错误";
         return crow::response(500, result);
     }
 
     result["msg"] = "修改成功";
+    return crow::response(200, result);
+}
+
+crow::response addStar(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+
+    auto user_id = jwt_result->first;
+
+    auto param_model_id = getIntParam(req, response, "model_id");
+    if (!param_model_id) {
+        return response;
+    }
+    int model_id = param_model_id.value();
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string addStarSql = "INSERT IGNORE INTO model_stars (user_id, model_id) VALUES (" +
+                             std::to_string(user_id) + ", " + std::to_string(model_id) + ");";
+
+    if (mysql_query(conn.get(), addStarSql.c_str()) != 0) {
+        result["msg"] = "插入语句错误";
+        return crow::response(500, result);
+    }
+
+    return crow::response(200, result);
+}
+
+crow::response delStar(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+
+    int user_id = jwt_result->first;
+
+    auto param_model_id = getIntParam(req, response, "model_id");
+    if (!param_model_id) {
+        return response;
+    }
+    int model_id = param_model_id.value();
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string delStarSql = "DELETE FROM model_stars WHERE user_id = " + std::to_string(user_id) +
+                             " AND model_id = " + std::to_string(model_id) + ";";
+
+    if (mysql_query(conn.get(), delStarSql.c_str()) != 0) {
+        result["msg"] = "删除语句错误";
+        return crow::response(500, result);
+    }
+
     return crow::response(200, result);
 }

@@ -40,7 +40,6 @@
 
 <script>
 import { api } from "@/api";
-import { mapActions } from "vuex";
 
 export default {
   data() {
@@ -64,7 +63,6 @@ export default {
     };
   },
   methods: {
-    ...mapActions("user", ["fetchUser"]),
     openDialog(userInfo) {
       this.form = { ...userInfo }; // 预填充数据
       this.dialogVisible = true;
@@ -97,21 +95,13 @@ export default {
 
       try {
         const response = await api.updateUser(requestData);
-
-        const { code, msg } = response.data;
-        if (code === 1) {
-          this.$message.success("修改成功");
-          this.fetchUser(this.$store.state.user.userInfo.user_id);
-        } else {
-          this.$message.error(msg);
-        }
+        this.$message.success(response.data.msg);
+        this.$store.dispatch(
+          "user/fetchUser",
+          this.$store.state.user.userInfo.user_id
+        );
       } catch (error) {
-        if (error.response && error.response.status === 409) {
-          this.$message.error(error.response.data.msg);
-        } else {
-          console.error("API 请求错误:", error);
-          this.$message.error(`网络异常，请稍后重试`);
-        }
+        this.$message.error(error.response.msg);
       }
     },
   },

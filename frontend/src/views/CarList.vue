@@ -54,7 +54,7 @@
           </el-select>
         </el-col>
 
-        <el-col :span="5">
+        <el-col :span="4">
           <el-select
             v-model="filters.rentalPrice"
             placeholder="选择租赁价格区间"
@@ -70,17 +70,20 @@
           </el-select>
         </el-col>
 
-        <el-col :span="5">
+        <el-col :span="4">
           <el-input
             v-model="filters.keyword"
-            placeholder="请输入车型或关键词"
+            placeholder="请输入车型"
             clearable
             class="custom-input"
           >
-            <template #append>
-              <el-button icon="el-icon-search" />
-            </template>
           </el-input>
+        </el-col>
+
+        <el-col v-if="!isAdmin" :span="2">
+          <el-checkbox v-model="filters.onlyStar" class="custom-checkbox">
+            仅显示已收藏
+          </el-checkbox>
         </el-col>
 
         <el-col v-if="isAdmin" :span="2">
@@ -161,9 +164,9 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
 import AddModelDialog from "@/components/AddModel.vue";
 import DeleteModelDialog from "@/components/DeleteModel.vue";
+import { api } from "@/api";
 
 export default {
   components: {
@@ -178,6 +181,7 @@ export default {
         salePrice: "",
         rentalPrice: "",
         keyword: "",
+        onlyStar: false,
       },
 
       // 销售价格选项
@@ -197,13 +201,14 @@ export default {
       // 分页显示
       currentPage: 1,
       pageSize: 5,
+
+      cars: [],
+      brands: [],
+      recommendedCars: [],
     };
   },
 
   computed: {
-    // 绑定 Vuex state 到组件
-    ...mapState("cars", ["cars", "brands", "recommendedCars"]),
-
     isAdmin() {
       return this.$store.state.user.userInfo.role === "管理员";
     },
@@ -227,7 +232,8 @@ export default {
         .filter(
           (car) =>
             !this.filters.keyword || car.model.includes(this.filters.keyword)
-        );
+        )
+        .filter((car) => !this.filters.onlyStar || car.is_star === 1);
     },
 
     paginatedCars() {
@@ -257,9 +263,6 @@ export default {
   },
 
   methods: {
-    // 绑定 Vuex action 到组件
-    ...mapActions("cars", ["fetchCars", "fetchBrands", "fetchRecommendedCars"]),
-
     addModel() {
       this.$refs.AddModelDialog.openDialog();
     },
@@ -290,6 +293,33 @@ export default {
 
     getImageUrl(path) {
       return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
+    },
+
+    async fetchCars() {
+      try {
+        const response = await api.getVehicleList();
+        this.cars = response.data.vehicles;
+      } catch (error) {
+        this.$message.error(error.response.data.msg);
+      }
+    },
+
+    async fetchBrands() {
+      try {
+        const response = await api.getBrandList();
+        this.brands = response.data.brands;
+      } catch (error) {
+        this.$message.error(error.response.data.msg);
+      }
+    },
+
+    async fetchRecommendedCars() {
+      try {
+        const response = await api.getRecommendedCars();
+        this.recommendedCars = response.data.recommendedVehicles;
+      } catch (error) {
+        this.$message.error(error.response.data.msg);
+      }
     },
   },
 };
@@ -357,6 +387,30 @@ export default {
 .custom-input :deep(.el-input__inner):focus {
   border-color: #007bff; /* 选中时颜色更深 */
   box-shadow: 0 0 8px rgba(64, 158, 255, 0.3);
+}
+
+.custom-checkbox {
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.custom-checkbox :deep(.el-checkbox__inner) {
+  border-radius: 4px;
+  transition: border-color 0.3s ease-in-out;
+}
+
+.custom-checkbox :deep(.el-checkbox__inner:hover),
+.custom-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  border-color: #007bff;
+}
+
+.custom-checkbox :deep(.el-checkbox__label) {
+  font-size: 14px;
+  color: #333;
+}
+
+.custom-checkbox :deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
+  color: #007bff;
 }
 
 .table-container {
