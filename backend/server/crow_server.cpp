@@ -80,6 +80,9 @@ void runCrow() {
     // 修改品牌
     CROW_ROUTE(app, "/model/update").methods(crow::HTTPMethod::POST)(updateModel);
 
+    // 删除品牌
+    CROW_ROUTE(app, "/model/del").methods(crow::HTTPMethod::GET)(delModel);
+
     // 获取评论
     CROW_ROUTE(app, "/comments").methods(crow::HTTPMethod::GET)(getComments);
 
@@ -109,6 +112,12 @@ void runCrow() {
 
     // 取消收藏
     CROW_ROUTE(app, "/model/delstar").methods(crow::HTTPMethod::GET)(delStar);
+
+    // 添加收藏
+    CROW_ROUTE(app, "/model/addrecommend").methods(crow::HTTPMethod::GET)(addRecommend);
+
+    // 取消收藏
+    CROW_ROUTE(app, "/model/delrecommend").methods(crow::HTTPMethod::GET)(delRecommend);
 
     app.port(8081).multithreaded().run();
 

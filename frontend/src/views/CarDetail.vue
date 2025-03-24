@@ -4,12 +4,24 @@
       <h2 class="car-title">
         {{ car.brand_name }} {{ car.model_name }}
         <el-button
+          v-if="!isAdmin"
           :type="car.is_star === 1 ? 'primary' : 'default'"
           :icon="car.is_star === 1 ? 'el-icon-star-on' : 'el-icon-star-off'"
           style="margin-left: 10px"
           @click="toggleStar"
         >
           {{ car.is_star === 1 ? "已收藏" : "收藏" }}
+        </el-button>
+        <el-button
+          v-if="isAdmin"
+          :type="car.is_recommend === 1 ? 'primary' : 'default'"
+          :icon="
+            car.is_recommend === 1 ? 'el-icon-star-on' : 'el-icon-star-off'
+          "
+          style="margin-left: 10px"
+          @click="toggleRecommend"
+        >
+          {{ car.is_recommend === 1 ? "已推荐" : "推荐" }}
         </el-button>
       </h2>
 
@@ -265,6 +277,32 @@ export default {
         }
         this.car.is_star = this.car.is_star === 1 ? 0 : 1; // 反转状态
         this.$message.success(this.car.is_star === 1 ? "收藏成功" : "取消收藏");
+      } catch (error) {
+        this.$message.error("网络错误，请稍后再试");
+      } finally {
+        this.isLoading = false; // 恢复按钮可点击状态
+      }
+    },
+
+    async toggleRecommend() {
+      if (this.$store.state.jwt.token == null) {
+        this.$message.error("请登录账号");
+        return;
+      }
+
+      if (this.isLoading) return; // 防止重复点击
+      this.isLoading = true;
+
+      try {
+        if (this.car.is_recommend) {
+          await api.delRecommend(this.carId);
+        } else {
+          await api.addRecommend(this.carId);
+        }
+        this.car.is_recommend = this.car.is_recommend === 1 ? 0 : 1; // 反转状态
+        this.$message.success(
+          this.car.is_recommend === 1 ? "推荐成功" : "取消推荐"
+        );
       } catch (error) {
         this.$message.error("网络错误，请稍后再试");
       } finally {

@@ -55,12 +55,14 @@ crow::response getVehicleList(const crow::request& req) {
 
     std::string query =
         "SELECT m.model_id, m.brand_name, m.model_name, m.max_range, "
-        "m.leasing_price, m.purchase_price, "
-        "IF(ms.model_id IS NOT NULL, 1, 0) AS is_star "
+        "m.leasing_price, m.purchase_price, m.power_type, m.peak_power, m.acceleration, "
+        "m.seat_count, m.storage_space,  "
+        "IF(ms.model_id IS NOT NULL, 1, 0) AS is_star, COUNT(v.vehicle_id) AS available_number "
         "FROM models AS m "
-        "LEFT JOIN model_stars AS ms "
-        "ON m.model_id = ms.model_id AND ms.user_id = " +
-        std::to_string(user_id);
+        "LEFT JOIN model_stars AS ms ON m.model_id = ms.model_id AND ms.user_id = " +
+        std::to_string(user_id) +
+        " LEFT JOIN vehicles AS v ON v.model_id = m.model_id AND v.status = '可用' "
+        "GROUP BY m.model_id, ms.model_id";
 
     if (mysql_query(conn.get(), query.c_str())) {
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
@@ -71,7 +73,7 @@ crow::response getVehicleList(const crow::request& req) {
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
     if (!res || mysql_num_rows(res.get()) == 0) {
         result["msg"] = "查询结果为空";
-        return crow::response(500, result);
+        return crow::response(200, result);
     }
 
     // 遍历结果集
@@ -85,8 +87,13 @@ crow::response getVehicleList(const crow::request& req) {
         vehicle["range"] = std::stoi(row[3]);
         vehicle["rentalPrice"] = std::stod(row[4]);
         vehicle["salePrice"] = std::stod(row[5]);
-        vehicle["is_star"] = std::stoi(row[6]);
-
+        vehicle["power_type"] = row[6];
+        vehicle["peak_power"] = std::stoi(row[7]);
+        vehicle["acceleration"] = std::stoi(row[8]);
+        vehicle["seat_count"] = std::stoi(row[9]);
+        vehicle["storage_space"] = std::stoi(row[10]);
+        vehicle["is_star"] = std::stoi(row[11]);
+        vehicle["available_number"] = std::stoi(row[12]);
         vehicles.push_back(std::move(vehicle));
     }
 
@@ -119,7 +126,7 @@ crow::response getRecommendedVehicleList(const crow::request& req) {
     std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
     if (!res || mysql_num_rows(res.get()) == 0) {
         result["msg"] = "查询结果为空";
-        return crow::response(500, result);
+        return crow::response(200, result);
     }
 
     // 遍历结果集
@@ -178,7 +185,8 @@ crow::response getVehicleDetails(const crow::request& req) {
     // 查询基本信息
     std::string query =
         "SELECT brand_name, model_name, max_range, leasing_price, purchase_price, "
-        "power_type, peak_power, acceleration, seat_count, storage_space, image_paths FROM models "
+        "power_type, peak_power, acceleration, seat_count, storage_space, recommend, image_paths "
+        "FROM models "
         "WHERE model_id = " +
         std::to_string(model_id);
 
@@ -206,9 +214,10 @@ crow::response getVehicleDetails(const crow::request& req) {
     vehicle["acceleration"] = std::stod(row[7]);
     vehicle["seat_count"] = std::stoi(row[8]);
     vehicle["storage_space"] = std::stoi(row[9]);
+    vehicle["is_recommend"] = std::stoi(row[10]);
 
     std::vector<crow::json::wvalue> imageListJson;
-    std::istringstream ss(row[10]);
+    std::istringstream ss(row[11]);
     std::string image;
     while (std::getline(ss, image, ',')) {
         image.erase(image.begin(), std::find_if(image.begin(), image.end(), [](unsigned char ch) {
@@ -227,7 +236,7 @@ crow::response getVehicleDetails(const crow::request& req) {
         "SELECT COUNT(*) FROM vehicles WHERE model_id = " + std::to_string(model_id) +
         " AND status = '可用'";
     if (mysql_query(conn.get(), count_query.c_str())) {
-        result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
+        result["msg"] = "SQL 执行失败 " + std::string(mysql_error(conn.get()));
         return crow::response(500, result);
     }
 
@@ -498,6 +507,45 @@ crow::response updateModel(const crow::request& req) {
     return crow::response(200, result);
 }
 
+crow::response delModel(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+
+    auto user_role = jwt_result->second;
+    if (user_role == "用户") {
+        result["msg"] = "没有删除权限";
+        return crow::response(500, result);
+    }
+
+    auto param_model_id = getIntParam(req, response, "model_id");
+    if (!param_model_id) {
+        return response;
+    }
+    int model_id = param_model_id.value();
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string delModelSql = "DELETE FROM models WHERE model_id = " + std::to_string(model_id);
+
+    if (mysql_query(conn.get(), delModelSql.c_str()) != 0) {
+        result["msg"] = "删除语句错误";
+        return crow::response(500, result);
+    }
+
+    result["msg"] = "删除成功";
+    return crow::response(200, result);
+}
+
 crow::response addStar(const crow::request& req) {
     crow::json::wvalue result;
     crow::response response;
@@ -565,5 +613,85 @@ crow::response delStar(const crow::request& req) {
         return crow::response(500, result);
     }
 
+    return crow::response(200, result);
+}
+
+crow::response addRecommend(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+
+    auto user_role = jwt_result->second;
+    if (user_role == "用户") {
+        result["msg"] = "没有推荐权限";
+        return crow::response(500, result);
+    }
+
+    auto param_model_id = getIntParam(req, response, "model_id");
+    if (!param_model_id) {
+        return response;
+    }
+    int model_id = param_model_id.value();
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string addRecommendSql =
+        "UPDATE models SET recommend = 1 WHERE model_id = " + std::to_string(model_id);
+
+    if (mysql_query(conn.get(), addRecommendSql.c_str()) != 0) {
+        result["msg"] = "修改语句错误：" + std::string(mysql_error(conn.get()));
+        return crow::response(500, result);
+    }
+
+    result["msg"] = "推荐成功";
+    return crow::response(200, result);
+}
+
+crow::response delRecommend(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+
+    auto user_role = jwt_result->second;
+    if (user_role == "用户") {
+        result["msg"] = "没有推荐权限";
+        return crow::response(500, result);
+    }
+
+    auto param_model_id = getIntParam(req, response, "model_id");
+    if (!param_model_id) {
+        return response;
+    }
+    int model_id = param_model_id.value();
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string addRecommendSql =
+        "UPDATE models SET recommend = 0 WHERE model_id = " + std::to_string(model_id);
+
+    if (mysql_query(conn.get(), addRecommendSql.c_str()) != 0) {
+        result["msg"] = "修改语句错误：" + std::string(mysql_error(conn.get()));
+        return crow::response(500, result);
+    }
+
+    result["msg"] = "取消推荐成功";
     return crow::response(200, result);
 }

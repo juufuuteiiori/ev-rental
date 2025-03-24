@@ -56,6 +56,9 @@ export const api = {
   // 修改品牌
   updateModel: (modelData) => apiClient.post("/model/update", modelData),
 
+  // 删除品牌
+  delModel: (model_id) => apiClient.get("/model/del", { params: { model_id } }),
+
   // 根据 ID 获取车辆信息
   getVehicleById: (vehicle_id) =>
     apiClient.get("/vehicles", { params: { vehicle_id } }),
@@ -136,6 +139,14 @@ export const api = {
   // 取消收藏车辆
   delStar: (model_id) =>
     apiClient.get("/model/delstar", { params: { model_id } }),
+
+  // 推荐车辆
+  addRecommend: (model_id) =>
+    apiClient.get("/model/addrecommend", { params: { model_id } }),
+
+  // 取消推荐车辆
+  delRecommend: (model_id) =>
+    apiClient.get("/model/delrecommend", { params: { model_id } }),
 
   // 其他 API...
 };
