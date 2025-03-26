@@ -47,6 +47,8 @@ crow::response getImage(const crow::request& req) {
     std::string raw_path = req.url_params.get("path");
     std::string filename = urlDecode(raw_path);
 
+    if (filename.empty()) filename = "user_photo.png";
+
     // 限制只能访问 images/ 目录下的文件
     if (filename.find("..") != std::string::npos || filename[0] == '/') {
         return crow::response(403, "Forbidden");

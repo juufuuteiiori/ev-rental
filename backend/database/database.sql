@@ -6,16 +6,17 @@ CREATE TABLE IF NOT EXISTS users (
     user_name VARCHAR(50) NOT NULL UNIQUE,                     -- 用户名
     user_phone VARCHAR(15) UNIQUE,                             -- 用户的手机号
     user_password VARCHAR(255) NOT NULL,                       -- 用户的登录密码
+    user_photo TEXT,                                           -- 图片路径
     role ENUM('用户', '管理员') NOT NULL DEFAULT '用户'         -- 权限管理 
 );
 
-INSERT INTO users (user_name, user_phone, user_password, role) VALUES
-    ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING', '用户'),
-    ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C', '用户'),
-    ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u', '用户'),
-    ('david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti', '用户'),
-    ('eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '用户'),
-    ('iori', '13800000006', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '管理员'); -- 默认密码为 "password"
+INSERT INTO users (user_name, user_phone, user_password, role, user_phone) VALUES
+    ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING', '用户', '6fd7eab7c7_Fy17u79XoAAMbl7.jpg'),
+    ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C', '用户', NULL),
+    ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u', '用户', NULL),
+    ('david', '13800000004', '$2a$12$qeTR9nkR.2GRBQH0z9ubUOimoAag.StU25/wNmtqeRK1bzyCxYqti', '用户', NULL),
+    ('eve', '13800000005', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '用户', NULL),
+    ('iori', '13800000006', '$2a$12$Qg63lFuLfmaMtCBSHDWZJ.euD07RUOPggxE1Oh0.TqvsEtbo4.tOq', '管理员', NULL); -- 默认密码为 "password"
 
 -- 型号表
 CREATE TABLE IF NOT EXISTS models (
@@ -102,11 +103,13 @@ CREATE TABLE IF NOT EXISTS orders (
     order_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,          -- 订单唯一标识
     user_id INT NOT NULL,                                      -- 关联用户表，标识下单用户
     vehicle_id INT NOT NULL,                                   -- 关联电动车表，标识租赁车辆
-    order_date DATE NOT NULL,             -- 订单创建日期
+    order_date DATE NOT NULL,                                  -- 订单创建日期
     order_type ENUM('购买', '租赁') NOT NULL,                   -- 订单类型
     end_date DATE DEFAULT NULL,                                -- 租赁结束日期（仅租赁适用）
     total_price DECIMAL(10, 2) NOT NULL,                       -- 订单总金额（单位：元）
     status ENUM('进行中', '已完成') NOT NULL DEFAULT '进行中',   -- 订单状态
+    rating INT NULL CHECK (rating BETWEEN 1 AND 5),            -- 用户评分
+    review TEXT NULL,                                          -- 用户评论
 
     CHECK (order_type = '购买' OR (end_date IS NOT NULL AND end_date >= order_date)), -- 确保租赁订单有日期
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE, -- 关联用户，用户删除时订单删除
@@ -114,18 +117,18 @@ CREATE TABLE IF NOT EXISTS orders (
     CONSTRAINT unique_user_vehicle_order UNIQUE (user_id, vehicle_id, order_date)
 );
 
-INSERT INTO orders (user_id, vehicle_id, order_date, order_type, end_date, total_price, status)
+INSERT INTO orders (user_id, vehicle_id, order_date, order_type, end_date, total_price, status, rating, review)
 VALUES
-    (1, 1, '2024-06-15', '租赁', '2024-12-15', 27000.00, '已完成'),
-    (5, 12, '2024-07-08', '租赁', '2025-03-08', 48000.00, '进行中'),
-    (4, 4, '2024-07-15', '租赁', '2024-10-15', 12000.00, '已完成'),
-    (3, 3, '2024-08-01', '租赁', '2024-12-01', 18000.00, '已完成'),
-    (3, 7, '2024-09-10', '购买', NULL, 450000.00, '已完成'),
-    (5, 14, '2024-09-20', '购买', NULL, 320000.00, '已完成'),
-    (4, 9, '2024-11-05', '购买', NULL, 270000.00, '已完成'),
-    (2, 5, '2025-01-25', '租赁', '2025-4-25', 10800.00, '进行中'), 
-    (1, 2, '2025-02-20', '租赁', '2025-8-20', 27000.00, '进行中'), 
-    (5, 16, '2025-02-28', '租赁', '2025-3-28', 3000.00, '进行中');
+    (1, 1, '2024-06-15', '租赁', '2024-12-15', 27000.00, '已完成', 5, '体验不错'),
+    (5, 12, '2024-07-08', '租赁', '2025-03-08', 48000.00, '进行中', NULL, NULL),
+    (4, 4, '2024-07-15', '租赁', '2024-10-15', 12000.00, '已完成', 4, '体验还行'),
+    (3, 3, '2024-08-01', '租赁', '2024-12-01', 18000.00, '已完成', 5, '下次还会选择这辆车'),
+    (3, 7, '2024-09-10', '购买', NULL, 450000.00, '已完成', 5, '购买体验很好'),
+    (5, 14, '2024-09-20', '购买', NULL, 320000.00, '已完成', 5, '取车很方便'),
+    (4, 9, '2024-11-05', '购买', NULL, 270000.00, '已完成', 4, '质量不错'),
+    (2, 5, '2025-01-25', '租赁', '2025-4-25', 10800.00, '进行中', NULL, NULL), 
+    (1, 2, '2025-02-20', '租赁', '2025-8-20', 27000.00, '进行中', NULL, NULL), 
+    (5, 16, '2025-02-28', '租赁', '2025-3-28', 3000.00, '进行中', NULL, NULL);
 
 CREATE TABLE IF NOT EXISTS model_price_history (
     history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,

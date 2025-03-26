@@ -9,6 +9,7 @@ import CarDetail from "@/views/CarDetail.vue";
 import OrderPage from "@/views/OrderPage.vue";
 import OrderList from "@/views/OrderList.vue";
 import DiscussionPage from "@/views/DiscussionPage.vue";
+import UserPage from "@/views/UserPage.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -52,6 +53,11 @@ const routes = [
     path: "/discussion",
     name: "DiscussionPage",
     component: DiscussionPage,
+  },
+  {
+    path: "/users",
+    name: "users",
+    component: UserPage,
   },
 ]; // 定义路由规则
 

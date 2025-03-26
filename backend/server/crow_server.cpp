@@ -50,6 +50,9 @@ void runCrow() {
     // 获取账号信息 API
     CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::GET)(getUser);
 
+    // 获取所有账号信息 API
+    CROW_ROUTE(app, "/user/all").methods(crow::HTTPMethod::GET)(getAllUser);
+
     // 修改账号信息 API
     CROW_ROUTE(app, "/user").methods(crow::HTTPMethod::POST)(updateUser);
 
@@ -118,6 +121,9 @@ void runCrow() {
 
     // 取消收藏
     CROW_ROUTE(app, "/model/delrecommend").methods(crow::HTTPMethod::GET)(delRecommend);
+
+    // 车辆评价
+    CROW_ROUTE(app, "/orders/comment").methods(crow::HTTPMethod::POST)(submitComment);
 
     app.port(8081).multithreaded().run();
 

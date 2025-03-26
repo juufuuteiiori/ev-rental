@@ -153,8 +153,9 @@ crow::response getUser(const crow::request& req) {
     }
 
     // 查询用户信息
-    std::string query = "SELECT user_id, user_name, user_phone, role FROM users WHERE user_id = " +
-                        std::to_string(user_id);
+    std::string query =
+        "SELECT user_id, user_name, user_phone, role, user_photo FROM users WHERE user_id = " +
+        std::to_string(user_id);
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["msg"] = "数据库错误";
         return crow::response(500, result);
@@ -167,13 +168,12 @@ crow::response getUser(const crow::request& req) {
         return crow::response(404, result);
     }
 
-    // 组装 JSON 响应
     result["msg"] = "查询成功";
     result["user_id"] = std::stoi(row[0]);
     result["user_name"] = row[1];
     result["user_phone"] = row[2] ? row[2] : "";
     result["role"] = row[3];
-
+    result["user_photo"] = row[4] ? row[4] : crow::json::wvalue();
     return crow::response(200, result);
 }
 
@@ -206,6 +206,10 @@ crow::response updateUser(const crow::request& req) {
         (body.has("user_password") && body["user_password"].t() == crow::json::type::String)
             ? BCrypt::generateHash(body["user_password"].s())
             : "";
+    std::string user_photo =
+        (body.has("user_photo") && body["user_photo"].t() == crow::json::type::String)
+            ? body["user_photo"].s()
+            : std::string();
 
     // 连接数据库
     auto conn = getDatabaseConnection();
@@ -241,7 +245,10 @@ crow::response updateUser(const crow::request& req) {
     if (!user_password.empty()) {
         query += ", user_password = '" + std::string(safe_password) + "'";
     }
+    query += user_photo.empty() ? ", user_photo = NULL" : ", user_photo = '" + user_photo + "'";
     query += " WHERE user_id = " + std::to_string(user_id);
+
+    std::cout << query << std::endl;
 
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["msg"] = "该手机号已注册";
@@ -249,5 +256,57 @@ crow::response updateUser(const crow::request& req) {
     }
 
     result["msg"] = "修改成功";
+    return crow::response(200, result);
+}
+
+crow::response getAllUser(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+    auto jwt_user_role = jwt_result->second;
+
+    if (jwt_user_role != "管理员") {
+        result["msg"] = "没有查询权限";
+        return crow::response(403, result);
+    }
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    // 查询所有用户信息
+    std::string query =
+        "SELECT user_id, user_name, user_phone, user_photo FROM users WHERE role = '用户'";
+    if (mysql_query(conn.get(), query.c_str()) != 0) {
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    std::shared_ptr<MYSQL_RES> res(mysql_store_result(conn.get()), mysql_free_result);
+    if (!res || mysql_num_rows(res.get()) == 0) {
+        result["msg"] = "查询结果为空";
+        return crow::response(200, result);
+    }
+
+    std::vector<crow::json::wvalue> users;
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res.get()))) {
+        crow::json::wvalue user;
+        user["user_id"] = std::stoi(row[0]);
+        user["user_name"] = row[1];
+        user["user_phone"] = row[2] ? row[2] : "";
+        user["user_photo"] = row[3] ? row[3] : crow::json::wvalue();
+        users.push_back(user);
+    }
+
+    result["users"] = std::move(users);
+    result["msg"] = "查询成功";
     return crow::response(200, result);
 }

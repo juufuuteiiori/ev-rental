@@ -68,12 +68,7 @@
     </el-card>
 
     <!-- 帖子列表 -->
-    <el-card
-      v-for="post in paginatedPosts"
-      :key="post.id"
-      class="post-card"
-      ref="contentCard"
-    >
+    <el-card v-for="post in paginatedPosts" :key="post.id" class="post-card">
       <h3>{{ post.author }}</h3>
       <p>{{ post.content }}</p>
       <div class="post-footer">

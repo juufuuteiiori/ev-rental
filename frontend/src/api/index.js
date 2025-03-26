@@ -72,6 +72,9 @@ export const api = {
   // 获取用户信息
   getUserById: (user_id) => apiClient.get("/user", { params: { user_id } }),
 
+  // 获取所有用户信息
+  getAllUser: () => apiClient.get("/user/all"),
+
   // 修改用户信息
   updateUser: (userData) => apiClient.post("/user", userData),
 
@@ -147,6 +150,10 @@ export const api = {
   // 取消推荐车辆
   delRecommend: (model_id) =>
     apiClient.get("/model/delrecommend", { params: { model_id } }),
+
+  // 车辆评价
+  submitComment: (commentData) =>
+    apiClient.post("/orders/comment", commentData),
 
   // 其他 API...
 };

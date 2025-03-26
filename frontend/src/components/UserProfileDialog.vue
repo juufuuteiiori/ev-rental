@@ -9,7 +9,7 @@
       <!-- 用户头像 -->
       <el-avatar
         :size="150"
-        :src="userInfo.avatar || defaultAvatar"
+        :src="getImageUrl(userInfo.user_photo)"
         class="user-avatar"
       />
 
@@ -44,6 +44,15 @@ export default {
   methods: {
     openDialog() {
       this.dialogVisible = true;
+    },
+
+    getImageUrl(path) {
+      // 处理 path 为 undefined 或空字符串的情况
+      if (path === undefined || path === null) {
+        path = ""; // 赋值空字符串
+      }
+
+      return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
     },
   },
   computed: {

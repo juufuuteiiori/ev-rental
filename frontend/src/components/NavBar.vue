@@ -11,6 +11,9 @@
           <router-link to="/cars" class="nav-item">租售车辆</router-link>
           <router-link to="/orderlist" class="nav-item">订单列表</router-link>
           <router-link to="/discussion" class="nav-item">讨论区</router-link>
+          <router-link v-if="isAdmin" to="/users" class="nav-item"
+            >用户列表</router-link
+          >
         </nav>
 
         <!-- 用户交互按钮 -->
@@ -20,7 +23,11 @@
           </button>
           <el-dropdown v-show="isLoggedIn" @command="handleCommand">
             <el-button class="menu-btn">
-              <el-avatar :src="userInfo.avatar || defaultAvatar" />
+              <el-avatar
+                :size="60"
+                :src="getImageUrl(userInfo.user_photo)"
+                class="user-avatar"
+              />
             </el-button>
 
             <el-dropdown-menu slot="dropdown">
@@ -54,7 +61,6 @@ export default {
   data() {
     return {
       isTransparent: true,
-      userInfo: this.$store.state.user.userInfo,
       defaultAvatar:
         "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
     };
@@ -104,10 +110,27 @@ export default {
         this.$router.push("/");
       }
     },
+
+    getImageUrl(path) {
+      // 处理 path 为 undefined 或空字符串的情况
+      if (path === undefined || path === null) {
+        path = ""; // 赋值空字符串
+      }
+
+      return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
+    },
   },
   computed: {
     isLoggedIn() {
       return this.$store.getters["jwt/getToken"] != null;
+    },
+
+    userInfo() {
+      return this.$store.state.user.userInfo;
+    },
+
+    isAdmin() {
+      return this.$store.state.user.userInfo.role === "管理员";
     },
   },
 };

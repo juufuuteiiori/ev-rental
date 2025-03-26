@@ -5,6 +5,7 @@ const state = {
     user_id: 0,
     user_name: "",
     user_phone: "",
+    user_photo: "",
     role: "",
   },
 };
@@ -16,6 +17,7 @@ const mutations = {
       user_id: userInfo.user_id || 0,
       user_name: userInfo.user_name || "",
       user_phone: userInfo.user_phone || "",
+      user_photo: userInfo.user_photo || "",
       role: userInfo.role || "",
     };
     localStorage.setItem("user_info", JSON.stringify(state.userInfo));
@@ -23,7 +25,13 @@ const mutations = {
 
   // 清除用户信息
   clearUserInfo(state) {
-    state.userInfo = { user_id: 0, user_name: "", user_phone: "", role: "" };
+    state.userInfo = {
+      user_id: 0,
+      user_name: "",
+      user_phone: "",
+      user_photo: "",
+      role: "",
+    };
     localStorage.removeItem("user_info"); // 清除存储的用户信息
   },
 };

@@ -296,6 +296,37 @@ crow::response getVehicleDetails(const crow::request& req) {
         }
     }
 
+    std::string comment_query =
+        "SELECT o.rating, o.review, u.user_name, o.order_id, o.order_type FROM orders o "
+        "LEFT JOIN vehicles v ON v.vehicle_id = o.vehicle_id "
+        "LEFT JOIN models m ON m.model_id = v.model_id "
+        "LEFT JOIN users u ON u.user_id = o.user_id "
+        "WHERE o.status = '已完成' AND m.model_id = " +
+        std::to_string(model_id);
+
+    if (mysql_query(conn.get(), comment_query.c_str())) {
+        result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
+        return crow::response(500, result);
+    }
+
+    std::shared_ptr<MYSQL_RES> res5(mysql_store_result(conn.get()), mysql_free_result);
+    if (res5) {
+        std::vector<crow::json::wvalue> comments;
+        MYSQL_ROW row5;
+        while ((row5 = mysql_fetch_row(res5.get()))) {
+            if (row5[0]) {
+                crow::json::wvalue comment;
+                comment["rating"] = std::stoi(row5[0]);  // 评分
+                comment["content"] = row5[1];            // 评论
+                comment["author"] = row5[2];             // 用户
+                comment["id"] = std::stoi(row5[3]);      // 编号
+                comment["type"] = row5[4];               // 类型
+                comments.push_back(std::move(comment));
+            }
+        }
+        vehicle["comments"] = std::move(comments);
+    }
+
     result["msg"] = "成功";
     result["vehicle"] = std::move(vehicle);
     return crow::response(200, result);

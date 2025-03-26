@@ -8,5 +8,6 @@ crow::response getOrders(const crow::request& req);
 crow::response getOrderById(const crow::request& req);
 crow::response submitOrder(const crow::request& req);
 crow::response orderDone(const crow::request& req);
+crow::response submitComment(const crow::request& req);
 
 #endif  // ORDER_HANDLER_H

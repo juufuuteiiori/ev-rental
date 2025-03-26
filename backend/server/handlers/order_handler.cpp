@@ -101,7 +101,8 @@ crow::response getOrderById(const crow::request& req) {
     // 查询订单信息
     std::string query =
         "SELECT o.user_id, o.order_date, m.brand_name, m.model_name, v.license_plate, "
-        "o.order_type, o.end_date, o.total_price, o.status, u.user_name, u.user_phone "
+        "o.order_type, o.end_date, o.total_price, o.status, u.user_name, u.user_phone, o.rating, "
+        "o.review "
         "FROM orders o "
         "JOIN vehicles v ON o.vehicle_id = v.vehicle_id "
         "JOIN models m ON v.model_id = m.model_id "
@@ -135,11 +136,13 @@ crow::response getOrderById(const crow::request& req) {
     order["model_name"] = row[3];
     order["license_plate"] = row[4];
     order["order_type"] = row[5];
-    order["end_date"] = row[6];
+    order["end_date"] = row[6] ? row[6] : crow::json::wvalue();
     order["total_price"] = std::stod(row[7]);
     order["order_status"] = row[8];
     order["user_name"] = row[9];
     order["user_phone"] = row[10];
+    order["rating"] = row[11] ? std::stoi(row[11]) : crow::json::wvalue();
+    order["review"] = row[12] ? row[12] : crow::json::wvalue();
 
     result["order"] = std::move(order);
 
@@ -318,5 +321,72 @@ crow::response orderDone(const crow::request& req) {
     }
 
     result["msg"] = "订单确认成功";
+    return crow::response(200, result);
+}
+
+crow::response submitComment(const crow::request& req) {
+    crow::json::wvalue result;
+    crow::response response;
+
+    auto jwt_result = getJWT(req, response);
+    if (!jwt_result) {
+        return response;
+    }
+
+    auto jwt_user_id = jwt_result->first;
+    auto jwt_role = jwt_result->second;
+
+    if (jwt_role == "管理员") {
+        result["msg"] = "管理员不可修改评价";
+        return crow::response(500, result);
+    }
+
+    // 解析 JSON 请求
+    auto body = crow::json::load(req.body);
+    if (!body || !body.has("rating") || body["rating"].t() != crow::json::type::Number ||
+        !body.has("review") || body["review"].t() != crow::json::type::String || !body.has("id") ||
+        body["id"].t() != crow::json::type::Number) {
+        result["msg"] = "表单信息错误";
+        return crow::response(400, result);
+    }
+
+    auto order_id = body["id"].i();
+    auto rating = body["rating"].i();
+    std::string review = body["review"].s();
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string select_query = "SELECT * FROM orders WHERE order_id = " + std::to_string(order_id) +
+                               " AND user_id = " + std::to_string(jwt_user_id);
+
+    if (mysql_query(conn.get(), select_query.c_str()) != 0) {
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    std::shared_ptr<MYSQL_RES> select_res(mysql_store_result(conn.get()), mysql_free_result);
+    if (!select_res || mysql_num_rows(select_res.get()) == 0) {
+        result["msg"] = "用户与订单信息不一致";
+        return crow::response(404, result);
+    }
+
+    char safe_review[2048];
+    mysql_real_escape_string(conn.get(), safe_review, review.c_str(), review.length());
+
+    std::string update_query = "UPDATE orders SET rating = " + std::to_string(rating) +
+                               ", review = '" + std::string(safe_review) +
+                               "' WHERE order_id = " + std::to_string(order_id);
+
+    if (mysql_query(conn.get(), update_query.c_str()) != 0) {
+        result["msg"] = "数据库错误";
+        return crow::response(500, result);
+    }
+
+    result["msg"] = "修改评价成功";
     return crow::response(200, result);
 }

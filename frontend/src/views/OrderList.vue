@@ -10,7 +10,7 @@
     <div v-else>
       <el-card class="filter-bar">
         <el-row :gutter="20">
-          <el-col :span="8">
+          <el-col :span="6">
             <el-date-picker
               v-model="filters.dateRange"
               type="daterange"
@@ -24,7 +24,17 @@
             />
           </el-col>
 
-          <el-col :span="5">
+          <el-col :span="4">
+            <el-input
+              v-model="filters.user_id"
+              placeholder="输入用户编号"
+              clearable
+              class="custom-input"
+            >
+            </el-input>
+          </el-col>
+
+          <el-col :span="4">
             <el-select
               v-model="filters.brand"
               placeholder="选择品牌"
@@ -40,7 +50,7 @@
             </el-select>
           </el-col>
 
-          <el-col :span="5">
+          <el-col :span="4">
             <el-select
               v-model="filters.order_type"
               placeholder="选择订单类型"
@@ -160,10 +170,39 @@
           {{ selectedOrder.end_date }}
         </el-descriptions-item>
       </el-descriptions>
+
+      <div class="comment-container">
+        <!-- 选择评分 -->
+        <el-rate
+          v-model="rating"
+          show-text
+          text-color="#ff9900"
+          class="rating-selector"
+          v-if="commentCheck"
+        />
+
+        <!-- 输入评论 -->
+        <el-input
+          v-model="review"
+          type="textarea"
+          placeholder="请输入评论..."
+          rows="4"
+          class="review-input"
+          v-if="commentCheck"
+        />
+      </div>
+
       <span slot="footer">
         <el-button v-if="orderCheck" type="danger" @click="orderDone"
           >完成订单</el-button
         >
+        <el-button
+          v-if="commentCheck && !isAdmin"
+          type="primary"
+          @click="submitComment"
+        >
+          修改评论
+        </el-button>
         <el-button @click="dialogVisible = false">关闭</el-button>
       </span>
     </el-dialog>
@@ -172,7 +211,6 @@
 
 <script>
 import { api } from "@/api";
-import { mapState, mapActions } from "vuex";
 
 export default {
   data() {
@@ -182,13 +220,17 @@ export default {
         brand: "",
         order_type: "",
         status: "",
+        user_id: "",
         dateRange: null,
       },
 
+      brands: [],
       isLoggedIn: false, // 是否已登录
       orders: [], // 订单数据
       dialogVisible: false, // 弹窗状态
       selectedOrder: {}, // 选中的订单详情
+      rating: null,
+      review: "",
 
       // 分页显示
       currentPage: 1,
@@ -197,15 +239,19 @@ export default {
   },
 
   computed: {
-    ...mapState("cars", ["brands"]),
     isAdmin() {
       return this.$store.state.user.userInfo.role === "管理员";
     },
+
     orderCheck() {
       return (
         this.selectedOrder.order_status === "进行中" &&
         this.selectedOrder.order_type === "购买"
       );
+    },
+
+    commentCheck() {
+      return this.selectedOrder.order_status === "已完成";
     },
 
     filteredOrders() {
@@ -216,6 +262,11 @@ export default {
             (new Date(this.filters.dateRange[0]) <=
               new Date(order.order_date) &&
               new Date(order.order_date) <= new Date(this.filters.dateRange[1]))
+        )
+        .filter(
+          (order) =>
+            !this.filters.user_id ||
+            order.user_id === Number(this.filters.user_id)
         )
         .filter(
           (order) =>
@@ -249,8 +300,6 @@ export default {
   },
 
   methods: {
-    ...mapActions("cars", ["fetchBrands"]),
-
     // 检查用户是否登录
     checkLogin() {
       this.isLoggedIn = !!this.$store.state.jwt.token; // 通过 Vuex 判断是否有 JWT token
@@ -273,6 +322,8 @@ export default {
         const response = await api.getOrder(order_id);
         this.selectedOrder = response.data.order;
         this.selectedOrder_id = order_id;
+        this.rating = response.data.order.rating;
+        this.review = response.data.order.review;
       } catch (error) {
         console.error("获取订单失败", error);
         this.$message.error("无法加载订单数据");
@@ -291,10 +342,41 @@ export default {
       }
     },
 
+    async submitComment() {
+      this.dialogVisible = false;
+
+      if (!this.rating || !this.review) {
+        this.$message.error("评分和评论不能为空");
+        return;
+      }
+
+      try {
+        const commentForm = {
+          id: this.selectedOrder_id,
+          rating: this.rating,
+          review: this.review,
+        };
+
+        await api.submitComment(commentForm);
+        this.$message.success("修改评价成功");
+      } catch (error) {
+        this.$message.error("确认评价失败");
+      }
+    },
+
+    async fetchBrands() {
+      try {
+        const response = await api.getBrandList();
+        this.brands = response.data.brands;
+      } catch (error) {
+        this.$message.error(error.response.data.msg);
+      }
+    },
+
     // 点击某一行，弹出订单详情
     openOrderDetail(row) {
-      this.dialogVisible = true;
       this.fetchOrderById(row.order_id);
+      this.dialogVisible = true;
     },
 
     // 跳转到登录页面
@@ -351,5 +433,23 @@ export default {
   border-radius: 12px; /* 圆角 */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
   transition: all 0.3s ease-in-out;
+}
+
+.comment-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 95%;
+  margin: 20px auto;
+}
+
+.rating-selector {
+  margin-bottom: 20px;
+}
+
+.review-input {
+  margin-bottom: 20px;
+  resize: none; /* 防止调整输入框大小 */
 }
 </style>

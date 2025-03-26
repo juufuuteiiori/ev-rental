@@ -70,6 +70,45 @@
       </el-card>
     </div>
 
+    <div class="comment-container">
+      <p class="comment-title">用户评论</p>
+
+      <el-card
+        v-for="comment in paginatedComment"
+        :key="comment.id"
+        class="comment-card"
+      >
+        <div class="comment-header">
+          <div style="width: 33%">
+            <p>{{ comment.author }}</p>
+          </div>
+
+          <div style="width: 33%">
+            <p>{{ comment.type }}</p>
+          </div>
+
+          <!-- 使用星星表示评分 -->
+          <div>
+            <i v-for="n in comment.rating" :key="n" class="el-icon-star-on"></i>
+          </div>
+        </div>
+
+        <p>{{ comment.content }}</p>
+      </el-card>
+
+      <!-- 分页 -->
+      <div class="paginated-container">
+        <el-pagination
+          background
+          layout="prev, pager, next"
+          :total="this.car.comments.length"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          @current-change="changePage"
+        />
+      </div>
+    </div>
+
     <div class="action-buttons">
       <el-button v-if="isAdmin" type="primary" size="large" @click="updateModel"
         >修改信息</el-button
@@ -95,10 +134,17 @@ export default {
   data() {
     return {
       carId: null,
-      car: {}, // 车辆数据
+      car: {
+        comments: [],
+      }, // 车辆数据
       isLoading: false,
+
+      // 分页显示
+      currentPage: 1,
+      pageSize: 5,
     };
   },
+
   methods: {
     getImageUrl(path) {
       return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
@@ -309,10 +355,23 @@ export default {
         this.isLoading = false; // 恢复按钮可点击状态
       }
     },
+
+    changePage(page) {
+      this.currentPage = page;
+      window.scrollTo({ top: window.innerHeight * 0.3, behavior: "smooth" });
+    },
   },
+
   computed: {
     isAdmin() {
       return this.$store.state.user.userInfo.role === "管理员";
+    },
+
+    paginatedComment() {
+      return this.car.comments.slice(
+        (this.currentPage - 1) * this.pageSize,
+        this.currentPage * this.pageSize
+      );
     },
   },
   mounted() {
@@ -407,6 +466,65 @@ export default {
 .chart {
   width: 35vw; /* 控制宽度 */
   height: 40vh; /* 控制高度 */
+}
+
+/* 评论容器 */
+.comment-container {
+  padding: 20px;
+  background-color: transparent; /* 背景颜色 */
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+  margin: 0 auto; /* 居中 */
+}
+
+/* 用户评论标题 */
+.comment-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* 每一条评论卡片 */
+.comment-card {
+  background-color: #ffffff;
+  padding: 20px;
+  margin: 20px !important; /* 上边的 comment-container 有一个 margin 的修饰，覆盖了此处的 margin。采用 !important 作为临时解决方案 */
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* 卡片阴影 */
+  transition: transform 0.3s ease-in-out;
+}
+
+.comment-card:hover {
+  transform: translateY(-5px); /* 鼠标悬停时卡片微微上移 */
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.el-icon-star-on {
+  font-size: 22px; /* 星星大小 */
+  margin-right: 5px; /* 星星之间的间距 */
+  color: #f39c12; /* 默认星星颜色 */
+}
+
+/* 评论内容 */
+.comment-card {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* 分页容器样式 */
+.paginated-container {
+  margin-top: 20px;
+  text-align: center; /* 使分页居中 */
 }
 
 .action-buttons {
