@@ -56,13 +56,16 @@ crow::response getVehicleList(const crow::request& req) {
     std::string query =
         "SELECT m.model_id, m.brand_name, m.model_name, m.max_range, "
         "m.leasing_price, m.purchase_price, m.power_type, m.peak_power, m.acceleration, "
-        "m.seat_count, m.storage_space,  "
-        "IF(ms.model_id IS NOT NULL, 1, 0) AS is_star, COUNT(v.vehicle_id) AS available_number "
+        "m.seat_count, m.storage_space, IF(ms.model_id IS NOT NULL, 1, 0) AS is_star, "
+        "COUNT(CASE WHEN v.status = '可用' THEN v.vehicle_id END) AS available_number, "
+        "m.recommend, COUNT(o.order_id) AS order_count, COUNT(o.review) AS review_count, "
+        "AVG(NULLIF(o.rating, 0)) AS avg_rating "
         "FROM models AS m "
         "LEFT JOIN model_stars AS ms ON m.model_id = ms.model_id AND ms.user_id = " +
         std::to_string(user_id) +
-        " LEFT JOIN vehicles AS v ON v.model_id = m.model_id AND v.status = '可用' "
-        "GROUP BY m.model_id, ms.model_id";
+        " LEFT JOIN vehicles AS v ON v.model_id = m.model_id "
+        "LEFT JOIN orders AS o ON o.vehicle_id = v.vehicle_id "
+        "GROUP BY m.model_id";
 
     if (mysql_query(conn.get(), query.c_str())) {
         result["msg"] = "SQL 执行失败: " + std::string(mysql_error(conn.get()));
@@ -89,17 +92,26 @@ crow::response getVehicleList(const crow::request& req) {
         vehicle["salePrice"] = std::stod(row[5]);
         vehicle["power_type"] = row[6];
         vehicle["peak_power"] = std::stoi(row[7]);
-        vehicle["acceleration"] = std::stoi(row[8]);
+        vehicle["acceleration"] = std::stod(row[8]);
         vehicle["seat_count"] = std::stoi(row[9]);
         vehicle["storage_space"] = std::stoi(row[10]);
         vehicle["is_star"] = std::stoi(row[11]);
         vehicle["available_number"] = std::stoi(row[12]);
+        vehicle["is_recommend"] = std::stoi(row[13]);
+        vehicle["order_count"] = std::stoi(row[14]);
+        vehicle["review_count"] = std::stoi(row[15]);
+        if (row[16] != NULL) {
+            vehicle["avg_rating"] = std::stod(row[16]);
+        } else {
+            vehicle["avg_rating"] = crow::json::wvalue();
+        }
         vehicles.push_back(std::move(vehicle));
     }
 
-    result["msg"] = "成功";
+    sortVehiclesByScore(vehicles);
     result["vehicles"] = std::move(vehicles);
 
+    result["msg"] = "成功";
     return crow::response(200, result);
 }
 

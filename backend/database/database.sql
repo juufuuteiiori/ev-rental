@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('用户', '管理员') NOT NULL DEFAULT '用户'         -- 权限管理 
 );
 
-INSERT INTO users (user_name, user_phone, user_password, role, user_phone) VALUES
+INSERT INTO users (user_name, user_phone, user_password, role, user_photo) VALUES
     ('alice', '13800000001', '$2a$12$Hl5x.7DMV672OSyhatWmb.46Ei.zfzXjNu1JZ60LStBw7yIB0xING', '用户', '6fd7eab7c7_Fy17u79XoAAMbl7.jpg'),
     ('bob', '13800000002', '$2a$12$Df5rFcexYWgfqLO3Yk2laOi16lHYHW3AVnGT/ECJU6AWGX8.Bip6C', '用户', NULL),
     ('charlie', '13800000003', '$2a$12$/G3SDM0skF0nbDWUEmYjW.VDcAuM5Eld700nxz/tLjCQZVXSjJI8u', '用户', NULL),
@@ -37,16 +37,16 @@ CREATE TABLE IF NOT EXISTS models (
 
 INSERT INTO models (brand_name, model_name, power_type, max_range, leasing_price, purchase_price, peak_power, acceleration, seat_count, storage_space, image_paths, recommend)
 VALUES
-    ('特斯拉', 'Model 3', '电动', 600, 4600.00, 285000.00, 250.00, 3.5, 5, 425, 'byd_sl.jpg,byd_sl.jpg', TRUE),
-    ('比亚迪', '汉 EV', '电动', 605, 3900.00, 255000.00, 200.00, 3.9, 5, 500, 'byd_sl.jpg,byd_sl.jpg', TRUE),
-    ('蔚来', 'ET7', '电动', 700, 5100.00, 460000.00, 280.00, 3.8, 5, 520, 'byd_sl.jpg', FALSE),
-    ('小鹏', 'P7', '电动', 670, 4100.00, 280000.00, 220.00, 4.0, 5, 450, 'byd_sl.jpg', FALSE),
-    ('理想', 'L9', '混动', 1100, 6100.00, 470000.00, 180.00, 5.5, 6, 550, 'byd_sl.jpg', TRUE),
-    ('极氪', '001', '电动', 620, 4400.00, 325000.00, 240.00, 3.8, 5, 500, 'byd_sl.jpg', FALSE),
-    ('哪吒', 'S', '电动', 650, 3600.00, 215000.00, 210.00, 4.2, 5, 400, 'byd_sl.jpg', FALSE),
-    ('广汽埃安', 'AION Y', '电动', 510, 3100.00, 165000.00, 150.00, 6.9, 5, 380, 'byd_sl.jpg', FALSE),
-    ('宝马', 'iX3', '电动', 550, 5600.00, 405000.00, 200.00, 5.0, 5, 500, 'byd_sl.jpg', TRUE),
-    ('奔驰', 'EQE', '电动', 630, 6100.00, 485000.00, 260.00, 4.5, 5, 540, 'byd_sl.jpg', TRUE);
+    ('特斯拉', 'Model 3', '电动', 634, 4000.00, 235500.00, 170.00, 6.1, 5, 682, 'Tesla_Model3_1.png,Tesla_Model3_2.png,Tesla_Model3_3.jpg', TRUE), -- 后轮驱动版
+    ('比亚迪', '汉 EV 尊贵型', '电动', 506, 3000.00, 179800.00, 200.00, 7.9, 5, 500, 'BYD_HEV_1.jpg,BYD_HEV_2.jpg,BYD_HEV_3.jpg,BYD_HEV_4.jpg', TRUE), -- 2025款 506KM 尊贵型
+    ('蔚来', 'ET7 行政版', '电动', 1050, 5000.00, 428000, 280.00, 3.8, 5, 520, 'WL_ET7_1.jpg,WL_ET7_2.jpg,WL_ET7_3.jpg,WL_ET7_4.jpg', FALSE),  -- ET7 行政版
+    ('小鹏', 'P7i 702 Pro', '电动', 702, 3300.00, 249900.00, 220.00, 3.9, 5, 450, 'XP_P7i_1.jpg,XP_P7i_2.jpg,XP_P7i_3.jpg,XP_P7i_4.jpg', FALSE), -- 702 Pro
+    ('理想', 'L9 Pro', '混动', 1412, 6000.00, 409800.00, 180.00, 5.3, 6, 700, 'LX_L9_1.jpg,LX_L9_2.jpg,LX_L9_3.png', TRUE), -- L9 Pro
+    ('极氪', '001 WE 后驱', '电动', 620, 4400.00, 325000.00, 240.00, 6.3, 5, 500, 'JK_001_1.webp,JK_001_2.webp,JK_001_3.webp', FALSE), -- WE 95kWh电池 后驱
+    ('哪吒', 'S 520 Lite', '电动', 520, 3000.00, 154800.00, 210.00, 7.4, 5, 400, 'NZ_S_1.webp,NZ_S_2.webp,NZ_S_3.webp,NZ_S_4.webp', FALSE), -- 520 Lite
+    ('广汽埃安', 'AION Y Younger', '电动', 430, 1500.00, 109800.00, 150.00, 6.9, 5, 380, 'GQAA_AIONY_1.png,GQAA_AIONY_2.png,GQAA_AIONY_3.png', FALSE), -- AION Y Younger
+    ('宝马', 'iX3 领先型', '电动', 540, 5600.00, 405000.00, 200.00, 6.8, 5, 500, 'BW_iX3_1.jpg,BW_iX3_2.jpg,BW_iX3_3.jpg', TRUE), -- 领先型
+    ('奔驰', 'EQE 500 4MATIC', '电动', 681, 6100.00, 478000.00, 260.00, 4.9, 5, 540, 'BZ_EQE_1.jpg,BZ_EQE_2.jpg,BZ_EQE_3.jpg,BZ_EQE_4.jpg', TRUE); -- 500 4MATIC 先锋版
 
 -- 电动车表
 CREATE TABLE IF NOT EXISTS vehicles (

@@ -443,7 +443,6 @@ export default {
       try {
         const response = await api.getVehicleList();
         this.cars = response.data.vehicles;
-        console.log(this.cars);
       } catch (error) {
         this.$message.error(error.response.data.msg);
       }

@@ -27,21 +27,39 @@ void sortCommentsByScore(std::vector<crow::json::wvalue>& comments) {
               [](auto& a, auto& b) { return computeCommentScore(a) > computeCommentScore(b); });
 }
 
-double computeModelScore(crow::json::wvalue& vechile) {
+double computeVehicleScore(crow::json::wvalue& vehicle) {
     double score = 0;
-    //            + car.user_rating * 5.0           // 用户评分
-    //            + std::log(car.comments + 1) * 1.2  // 评论数
 
-    //    std::log(car.orders + 1) * 2.0   // 订单量
-    //            + std::log(car.favorites + 1) * 1.5 // 收藏数
-    //            + car.range * 0.01                 // 续航
-    //            + car.peak_power * 0.05            // 充电速度
-    //            - car.acceleration * 1.0           // 加速时间（越小越好）
-    //            + car.seat_count * 0.5             // 座位数
-    //            + car.available_count * 0.3        // 可用数量
-    //            - car.rental_price * 0.0001        // 租赁价格（越低越好）
-    //            - car.sale_price * 0.00001         // 购买价格（越低越好）
-    //            + car.is_recommended * 10.0;       // 官方推荐（加分）
+    score += std::sqrt(std::stoi(vehicle["range"].dump())) * 0.05;  // 续航
+    score -= std::log(std::stod(vehicle["rentalPrice"].dump()) + 1) * 0.02;  // 租赁价格（越低越好）
+    score -= std::log(std::stod(vehicle["salePrice"].dump()) + 1) * 0.002;  // 购买价格（越低越好）
+    score += std::stoi(vehicle["peak_power"].dump()) * 0.05;                // 充电速度
+    score -=
+        std::pow(std::stod(vehicle["acceleration"].dump()), 1.5) * 0.8;  // 加速时间（越小越好）
+    score += std::stoi(vehicle["seat_count"].dump()) * 0.5;              // 座位数
+    score += std::sqrt(std::stoi(vehicle["storage_space"].dump())) * 0.5;  // 存储空间
+    score += std::stoi(vehicle["is_star"].dump()) * 5.00;                  // 收藏
+    score += std::stoi(vehicle["available_number"].dump()) * 0.3;          // 可用数量
+    score += std::stoi(vehicle["is_recommend"].dump()) * 12.0;  // 官方推荐（加分）
+    score += std::log(std::stoi(vehicle["order_count"].dump()) + 1) * 2.5;  // 订单量
+
+    int review_count = std::stoi(vehicle["review_count"].dump());
+    score += std::log(review_count + 1) * 1.2;  // 评论数
+
+    if (vehicle["avg_rating"].dump() != "null") {
+        double rating = std::stod(vehicle["avg_rating"].dump());
+
+        // 评分数量的权重（平方根+平滑）
+        double weight = std::sqrt(review_count + 1);
+
+        // 评分影响：以 3 分为基准，高于 3 分加分，低于 3 分扣分
+        score += (rating - 3) * 3.0 * weight;
+    }
 
     return score;
+}
+
+void sortVehiclesByScore(std::vector<crow::json::wvalue>& vehicles) {
+    std::sort(vehicles.begin(), vehicles.end(),
+              [](auto& a, auto& b) { return computeVehicleScore(a) > computeVehicleScore(b); });
 }

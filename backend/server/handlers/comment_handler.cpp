@@ -80,6 +80,7 @@ crow::response getComments(const crow::request& req) {
     sortCommentsByScore(comments);
     result["comments"] = std::move(comments);
 
+    result["msg"] = "成功";
     return crow::response(200, result);
 }
 

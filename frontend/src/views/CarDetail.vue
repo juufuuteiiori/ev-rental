@@ -60,7 +60,29 @@
     <!-- 数据可视化 -->
     <div class="charts-container">
       <el-card class="chart-card">
-        <h3>车辆性能分析</h3>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 80px;
+            margin-bottom: 30px;
+          "
+        >
+          <h3>车辆性能分析与对比</h3>
+          <el-select
+            v-model="compareCarId"
+            placeholder="请选择对比车辆"
+            @change="renderRadarChart"
+          >
+            <el-option
+              v-for="car in cars"
+              :key="car.model_id"
+              :label="car.brand + ' ' + car.model"
+              :value="car.model_id"
+            />
+          </el-select>
+        </div>
+
         <div ref="radarChart" class="chart"></div>
       </el-card>
 
@@ -134,11 +156,13 @@ export default {
   data() {
     return {
       carId: null,
+      cars: {},
       car: {
         comments: [],
       }, // 车辆数据
-      isLoading: false,
 
+      isLoading: false,
+      compareCarId: null,
       // 分页显示
       currentPage: 1,
       pageSize: 5,
@@ -166,33 +190,74 @@ export default {
       this.renderLineChart();
     },
 
+    async fetchCars() {
+      try {
+        const response = await api.getVehicleList();
+        this.cars = response.data.vehicles;
+      } catch (error) {
+        this.$message.error(error.response.data.msg);
+      }
+    },
+
     renderRadarChart() {
+      const expNorm = (value, min, max) => {
+        return (1 - Math.exp((min - value) / (max - min))) / (1 - Math.exp(-1));
+      };
+
       const radarChart = echarts.init(this.$refs.radarChart);
+      const radarData = [
+        {
+          value: [
+            expNorm(this.car.max_range, 0, 1500),
+            expNorm(this.car.peak_power, 0, 300),
+            expNorm(10 - this.car.acceleration, 0, 10),
+            expNorm(this.car.seat_count, 2, 8),
+            expNorm(this.car.storage_space, 300, 800),
+          ],
+          name: this.car.brand_name + " " + this.car.model_name,
+          areaStyle: { opacity: 0.2 },
+        },
+      ];
+
+      const legendData = [this.car.brand_name + " " + this.car.model_name];
+      const compareCar = this.cars
+        ? this.cars.find((car) => car.model_id === this.compareCarId) || null
+        : null;
+
+      if (compareCar != null) {
+        radarData.push({
+          value: [
+            expNorm(compareCar.range, 0, 1500),
+            expNorm(compareCar.peak_power, 0, 300),
+            expNorm(10 - compareCar.acceleration, 0, 10),
+            expNorm(compareCar.seat_count, 2, 8),
+            expNorm(compareCar.storage_space, 300, 800),
+          ],
+          name: compareCar.brand + " " + compareCar.model,
+          areaStyle: { opacity: 0.2 },
+        });
+        legendData.push(compareCar.brand + " " + compareCar.model);
+      }
+
       const option = {
+        tooltip: { trigger: "item" },
+        legend: {
+          legendData,
+        },
         radar: {
           indicator: [
-            { name: "续航 (km)", max: 1200 },
-            { name: "充电峰值功率(kW)", max: 500 },
-            { name: "加速（秒百公里）", max: 10 },
-            { name: "座位数", max: 10 },
-            { name: "储物空间（升）", max: 700 },
+            { name: "续航得分", max: 1 },
+            { name: "充电峰值功率得分", max: 1 },
+            { name: "百公里加速得分", max: 1 },
+            { name: "座位数得分", max: 1 },
+            { name: "储物空间得分", max: 1 },
           ],
+          center: ["50%", "60%"], // 雷达图整体向下移动
         },
         series: [
           {
             type: "radar",
-            data: [
-              {
-                value: [
-                  this.car.max_range, // 续航
-                  this.car.peak_power, // 充电功率
-                  10 - this.car.acceleration, // 加速度
-                  this.car.seat_count, // 座位数
-                  this.car.storage_space, // 储物空间
-                ],
-                name: this.car.model_name,
-              },
-            ],
+            data: radarData,
           },
         ],
       };
@@ -376,6 +441,7 @@ export default {
   },
   mounted() {
     this.fetchCarDetails();
+    this.fetchCars();
   },
 };
 </script>
