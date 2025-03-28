@@ -4,12 +4,13 @@ import store from "@/store";
 import HomeView from "@/views/HomeView.vue";
 import ErrorPage from "@/views/ErrorPage.vue";
 import LogIn from "@/views/LogIn.vue";
-import CarList from "@/views/CarList.vue";
-import CarDetail from "@/views/CarDetail.vue";
+import ModelList from "@/views/ModelList.vue";
+import ModelDetail from "@/views/ModelDetail.vue";
 import OrderPage from "@/views/OrderPage.vue";
 import OrderList from "@/views/OrderList.vue";
 import DiscussionPage from "@/views/DiscussionPage.vue";
 import UserPage from "@/views/UserPage.vue";
+import VehicleList from "@/views/VehicleList.vue";
 
 Vue.use(VueRouter); // 路由管理工具
 
@@ -30,14 +31,14 @@ const routes = [
     component: LogIn,
   },
   {
-    path: "/cars",
-    name: "CarList",
-    component: CarList,
+    path: "/Models",
+    name: "ModelList",
+    component: ModelList,
   },
   {
-    path: "/car/:id",
-    name: "CarDetail",
-    component: CarDetail,
+    path: "/Model/:id",
+    name: "ModelDetail",
+    component: ModelDetail,
   },
   {
     path: "/order/:id",
@@ -53,6 +54,11 @@ const routes = [
     path: "/discussion",
     name: "DiscussionPage",
     component: DiscussionPage,
+  },
+  {
+    path: "/vehicles",
+    name: "VehicleList",
+    component: VehicleList,
   },
   {
     path: "/users",

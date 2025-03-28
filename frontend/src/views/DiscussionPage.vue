@@ -361,12 +361,18 @@ export default {
     //   if (post) post.likes++;
     // },
   },
+
+  watch: {
+    filteredPosts() {
+      this.currentPage = 1;
+    },
+  },
 };
 </script>
 
 <style scoped>
 .discussion-container {
-  margin: 5%;
+  margin: 7% 1%;
   padding: 0 10%;
 }
 

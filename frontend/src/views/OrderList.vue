@@ -43,9 +43,9 @@
             >
               <el-option
                 v-for="brand in this.brands"
-                :key="brand"
-                :label="brand"
-                :value="brand"
+                :key="brand.id"
+                :label="brand.brand_name"
+                :value="brand.brand_name"
               />
             </el-select>
           </el-col>
@@ -171,14 +171,13 @@
         </el-descriptions-item>
       </el-descriptions>
 
-      <div class="comment-container">
+      <div class="comment-container" v-if="commentCheck">
         <!-- 选择评分 -->
         <el-rate
           v-model="rating"
           show-text
           text-color="#ff9900"
           class="rating-selector"
-          v-if="commentCheck"
         />
 
         <!-- 输入评论 -->
@@ -188,7 +187,6 @@
           placeholder="请输入评论..."
           rows="4"
           class="review-input"
-          v-if="commentCheck"
         />
       </div>
 
@@ -244,10 +242,17 @@ export default {
     },
 
     orderCheck() {
-      return (
-        this.selectedOrder.order_status === "进行中" &&
-        this.selectedOrder.order_type === "购买"
-      );
+      if (this.$store.state.user.userInfo.role === "管理员") {
+        return (
+          this.selectedOrder.order_status === "进行中" &&
+          this.selectedOrder.order_type === "租赁"
+        );
+      } else {
+        return (
+          this.selectedOrder.order_status === "进行中" &&
+          this.selectedOrder.order_type === "购买"
+        );
+      }
     },
 
     commentCheck() {
@@ -386,6 +391,12 @@ export default {
     // 改变分页
     changePage(page) {
       this.currentPage = page;
+    },
+  },
+
+  watch: {
+    filteredOrders() {
+      this.currentPage = 1;
     },
   },
 };

@@ -31,9 +31,9 @@
           >
             <el-option
               v-for="brand in this.brands"
-              :key="brand"
-              :label="brand"
-              :value="brand"
+              :key="brand.id"
+              :label="brand.brand_name"
+              :value="brand.brand_name"
             />
           </el-select>
         </el-col>
@@ -423,10 +423,10 @@ export default {
 
     // 跳转车辆详情页
     goToDetail(id) {
-      this.$router.push(`/car/${id}`);
+      this.$router.push(`/model/${id}`);
     },
     goToDetail2(row) {
-      this.$router.push(`/car/${row.model_id}`);
+      this.$router.push(`/model/${row.model_id}`);
     },
 
     // 改变分页
@@ -441,7 +441,7 @@ export default {
 
     async fetchCars() {
       try {
-        const response = await api.getVehicleList();
+        const response = await api.getModelList();
         this.cars = response.data.vehicles;
       } catch (error) {
         this.$message.error(error.response.data.msg);
@@ -464,6 +464,12 @@ export default {
       } catch (error) {
         this.$message.error(error.response.data.msg);
       }
+    },
+  },
+
+  watch: {
+    filteredCars() {
+      this.currentPage = 1;
     },
   },
 };

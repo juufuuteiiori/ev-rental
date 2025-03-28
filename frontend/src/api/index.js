@@ -45,7 +45,7 @@ apiClient.interceptors.response.use(
 // 统一管理 API 请求
 export const api = {
   // 获取车辆列表
-  getVehicleList: () => apiClient.get("/vehicles"),
+  getModelList: () => apiClient.get("/models"),
 
   // 获取品牌列表
   getBrandList: () => apiClient.get("/brands"),
@@ -154,6 +154,20 @@ export const api = {
   // 车辆评价
   submitComment: (commentData) =>
     apiClient.post("/orders/comment", commentData),
+
+  // 获取车辆列表
+  getVehicleList: () => apiClient.get("/vehicles"),
+
+  // 提交车辆信息
+  submitVehicle: (vehicleData) => apiClient.post("/vehicle/add", vehicleData),
+
+  // 修改车辆信息
+  updateVehicle: (vehicleData) =>
+    apiClient.post("/vehicle/update", vehicleData),
+
+  // 删除车辆信息
+  delVehicle: (vehicle_id) =>
+    apiClient.get("/vehicle/del", { params: { vehicle_id } }),
 
   // 其他 API...
 };

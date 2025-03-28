@@ -6,6 +6,7 @@
 
 #include "handlers/comment_handler.h"
 #include "handlers/image_handler.h"
+#include "handlers/model_handler.h"
 #include "handlers/order_handler.h"
 #include "handlers/user_handler.h"
 #include "handlers/vehicle_handler.h"
@@ -33,10 +34,13 @@ void runCrow() {
     CROW_ROUTE(app, "/")([]() { return "EV Rental System Backend"; });
 
     // 车辆 API
-    CROW_ROUTE(app, "/vehicles").methods(crow::HTTPMethod::GET)(getVehicleList);
+    CROW_ROUTE(app, "/models").methods(crow::HTTPMethod::GET)(getModelList);
 
     // 车辆详情 API
-    CROW_ROUTE(app, "/model").methods(crow::HTTPMethod::GET)(getVehicleDetails);
+    CROW_ROUTE(app, "/model").methods(crow::HTTPMethod::GET)(getModelDetails);
+
+    // 获取推荐车辆信息 API
+    CROW_ROUTE(app, "/recommended").methods(crow::HTTPMethod::GET)(getRecommendedModelList);
 
     // 品牌 API
     CROW_ROUTE(app, "/brands").methods(crow::HTTPMethod::GET)(getBrandList);
@@ -67,9 +71,6 @@ void runCrow() {
 
     // 确认订单 API
     CROW_ROUTE(app, "/orderDone").methods(crow::HTTPMethod::GET)(orderDone);
-
-    // 获取推荐车辆信息 API
-    CROW_ROUTE(app, "/recommended").methods(crow::HTTPMethod::GET)(getRecommendedVehicleList);
 
     // 获取图片 API
     CROW_ROUTE(app, "/image").methods(crow::HTTPMethod::GET)(getImage);
@@ -124,6 +125,18 @@ void runCrow() {
 
     // 车辆评价
     CROW_ROUTE(app, "/orders/comment").methods(crow::HTTPMethod::POST)(submitComment);
+
+    // 获取车辆列表
+    CROW_ROUTE(app, "/vehicles").methods(crow::HTTPMethod::GET)(getVehicleList);
+
+    // 提交车辆信息
+    CROW_ROUTE(app, "/vehicle/add").methods(crow::HTTPMethod::POST)(submitVehicle);
+
+    // 修改车辆信息
+    CROW_ROUTE(app, "/vehicle/update").methods(crow::HTTPMethod::POST)(updateVehicle);
+
+    // 删除车辆信息
+    CROW_ROUTE(app, "/vehicle/del").methods(crow::HTTPMethod::GET)(delVehicle);
 
     app.port(8081).multithreaded().run();
 

@@ -156,7 +156,7 @@ export default {
   data() {
     return {
       carId: null,
-      cars: {},
+      cars: null,
       car: {
         comments: [],
       }, // 车辆数据
@@ -179,20 +179,20 @@ export default {
       try {
         const response = await api.getModelById(this.carId);
         this.car = response.data.vehicle;
+
+        // 渲染图表
+        this.renderRadarChart();
+
+        this.renderLineChart();
       } catch (error) {
         this.car = null;
         this.$message.error(error.response.data.msg);
       }
-
-      // 渲染图表
-      this.renderRadarChart();
-
-      this.renderLineChart();
     },
 
     async fetchCars() {
       try {
-        const response = await api.getVehicleList();
+        const response = await api.getModelList();
         this.cars = response.data.vehicles;
       } catch (error) {
         this.$message.error(error.response.data.msg);

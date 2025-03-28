@@ -62,13 +62,13 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="是否购买保险">
+          <!-- <el-form-item label="是否购买保险">
             <el-switch
               v-model="formData.insurance"
               active-text="是"
               inactive-text="否"
             />
-          </el-form-item>
+          </el-form-item> -->
         </el-form>
       </el-card>
 
@@ -82,7 +82,7 @@
             <p v-if="formData.orderType === 'rent'">
               租赁时长：{{ formData.rentalDuration }} 个月
             </p>
-            <p>保险费用：{{ formData.insurance ? "¥ 2000" : "¥ 0" }}</p>
+            <!-- <p>保险费用：{{ formData.insurance ? "¥ 2000" : "¥ 0" }}</p> -->
             <p>总金额：¥ {{ totalPrice }}</p>
           </div>
 
@@ -140,7 +140,7 @@ export default {
         this.formData.orderType === "购买"
           ? this.car.purchase_price
           : this.car.leasing_price * this.formData.rentalDuration;
-      if (this.formData.insurance) price += 2000;
+      // if (this.formData.insurance) price += 2000;
       return price;
     },
   },

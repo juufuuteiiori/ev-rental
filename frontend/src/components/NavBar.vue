@@ -8,9 +8,12 @@
         <!-- 导航菜单 -->
         <nav class="nav-links">
           <router-link to="/" class="nav-item">首页</router-link>
-          <router-link to="/cars" class="nav-item">租售车辆</router-link>
+          <router-link to="/models" class="nav-item">租售车辆</router-link>
           <router-link to="/orderlist" class="nav-item">订单列表</router-link>
           <router-link to="/discussion" class="nav-item">讨论区</router-link>
+          <router-link v-if="isAdmin" to="/vehicles" class="nav-item"
+            >车辆列表</router-link
+          >
           <router-link v-if="isAdmin" to="/users" class="nav-item"
             >用户列表</router-link
           >
@@ -80,14 +83,14 @@ export default {
   },
   methods: {
     updateNavbarStyle(path) {
-      if ((path === "/") | (path === "/cars")) {
+      if ((path === "/") | (path === "/models")) {
         this.isTransparent = true;
       } else {
         this.isTransparent = false; // 其他路由直接变成白色
       }
     },
     handleScroll() {
-      if ((this.$route.path === "/") | (this.$route.path === "/cars")) {
+      if ((this.$route.path === "/") | (this.$route.path === "/models")) {
         this.isTransparent = window.scrollY < 50; // 滚动 50px 后变色
       }
     },

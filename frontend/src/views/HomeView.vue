@@ -51,31 +51,33 @@ export default {
     return {
       swiperOptions: {
         pagination: { clickable: true },
-        autoplay: { delay: 4000, disableOnInteraction: false },
+        autoplay: { delay: 6000, disableOnInteraction: false },
+        speed: 1000,
         loop: true,
       },
       swiperImages: [
         { src: require("@/assets/HomeView/HomePage1.png"), alt: "HomePage 1" },
         { src: require("@/assets/HomeView/HomePage2.png"), alt: "HomePage 2" },
+        { src: require("@/assets/HomeView/HomePage3.png"), alt: "HomePage 3" },
       ],
       contentItems: [
         {
-          imgSrc: require("@/assets/HomeView/HomePage1.png"),
+          imgSrc: require("@/assets/HomeView/ItemImage1.png"),
           shortCaption: "智能出行体验",
           longCaption: "智能导航与远程控制，让驾驶更便捷",
         },
         {
-          imgSrc: require("@/assets/HomeView/HomePage1.png"),
+          imgSrc: require("@/assets/HomeView/ItemImage2.png"),
           shortCaption: "高效充电网络",
           longCaption: "覆盖广泛的充电设施，畅享无忧续航",
         },
         {
-          imgSrc: require("@/assets/HomeView/HomePage1.png"),
+          imgSrc: require("@/assets/HomeView/ItemImage3.png"),
           shortCaption: "灵活租售方案",
           longCaption: "多种购车与租赁模式，满足个性化需求",
         },
         {
-          imgSrc: require("@/assets/HomeView/HomePage1.png"),
+          imgSrc: require("@/assets/HomeView/ItemImage4.png"),
           shortCaption: "智能安全系统",
           longCaption: "高级驾驶辅助技术，全方位守护安全",
         },
@@ -84,7 +86,7 @@ export default {
   },
   methods: {
     handleClick() {
-      this.$router.push("/cars");
+      this.$router.push("/models");
     },
   },
 };

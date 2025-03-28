@@ -75,6 +75,7 @@ add_executable(
     database/database.cpp
     database/connection_pool.cpp
     server/crow_server.cpp
+    server/handlers/model_handler.cpp
     server/handlers/vehicle_handler.cpp
     server/handlers/user_handler.cpp
     server/handlers/image_handler.cpp

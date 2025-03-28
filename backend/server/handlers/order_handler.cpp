@@ -305,9 +305,8 @@ crow::response orderDone(const crow::request& req) {
         return crow::response(400, result);
     }
 
-    auto order_type = row[1];
     auto status = row[2];
-    if (std::string(order_type) == "租赁" || std::string(status) == "已完成") {
+    if (std::string(status) == "已完成") {
         result["msg"] = "表单信息有误";
         return crow::response(400, result);
     }

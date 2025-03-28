@@ -90,6 +90,7 @@
             v-model.number="modelData.sale_price"
             placeholder="请输入销售价格"
             type="number"
+            step="0.1"
             class="short-input"
           ></el-input>
         </el-form-item>
@@ -100,6 +101,7 @@
             v-model.number="modelData.rental_price"
             placeholder="请输入租赁价格"
             type="number"
+            step="0.1"
             class="short-input"
           ></el-input>
         </el-form-item>
@@ -120,6 +122,7 @@
             v-model.number="modelData.acceleration"
             placeholder="请输入加速时间"
             type="number"
+            step="0.1"
             class="short-input"
           ></el-input>
         </el-form-item>
