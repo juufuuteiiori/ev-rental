@@ -219,6 +219,7 @@ crow::response delComment(const crow::request& req) {
     }
 
     auto jwt_user_id = jwt_result->first;
+    auto jwt_user_role = jwt_result->second;
 
     auto param_comment_id = getIntParam(req, response, "comment_id");
     if (!param_comment_id) {
@@ -249,7 +250,7 @@ crow::response delComment(const crow::request& req) {
     MYSQL_ROW getCommentRow = mysql_fetch_row(getCommentRes.get());
     auto user_id = std::stoi(getCommentRow[0]);
 
-    if (user_id != jwt_user_id) {
+    if (user_id != jwt_user_id && jwt_user_role == "用户") {
         result["msg"] = "删帖用户与jwt用户不匹配";
         return crow::response(400, result);
     }

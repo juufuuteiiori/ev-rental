@@ -56,9 +56,9 @@
               placeholder="选择支付方式"
               style="width: 300px"
             >
-              <el-option label="支付宝" value="alipay" />
-              <el-option label="微信" value="wechat" />
-              <el-option label="信用卡" value="creditcard" />
+              <el-option label="支付宝" value="支付宝" />
+              <el-option label="微信" value="微信" />
+              <el-option label="银行卡" value="银行卡" />
             </el-select>
           </el-form-item>
 
@@ -166,7 +166,9 @@ export default {
         return;
       }
 
-      const valid = this.$refs.orderForm.validate();
+      const valid = await new Promise((resolve) => {
+        this.$refs.orderForm.validate((isValid) => resolve(isValid));
+      });
       if (!valid) {
         this.$message.error("请正确填写订单信息！");
         return;
@@ -178,11 +180,11 @@ export default {
       orderData.totalPrice = this.totalPrice;
 
       try {
-        await api.submitOrder(orderData);
-        this.$message.success("提交成功！");
+        const response = await api.submitOrder(orderData);
         this.$router.push("/orderlist");
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("提交失败！");
+        this.$message.error(error.response.data.msg);
       }
     },
 

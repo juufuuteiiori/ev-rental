@@ -237,9 +237,9 @@ export default {
       try {
         const response = await api.postImage(formData); // 调用上传 API
         this.modelData.imageUrls.push(response.data.file); // 存储多个图片
-        this.$message.success("图片上传成功！");
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("图片上传失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -248,7 +248,9 @@ export default {
     },
 
     async updateModel() {
-      const valid = this.$refs.modelForm.validate();
+      const valid = await new Promise((resolve) => {
+        this.$refs.modelForm.validate((isValid) => resolve(isValid));
+      });
       if (!valid) {
         this.$message.error("请填写完整的车型信息！");
         return;
@@ -256,10 +258,10 @@ export default {
 
       try {
         const response = await api.updateModel(this.modelData);
-        this.$message.success(response.data.msg);
         this.dialogVisible = false;
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("提交失败");
+        this.$message.error(error.response.data.msg);
       }
     },
   },

@@ -3,13 +3,13 @@
     <!-- 顶部部分（一些链接） -->
     <el-row class="footer-top">
       <el-col :span="2">
-        <el-link href="404" class="footer-link">关于我们</el-link>
+        <el-link href="about" class="footer-link">关于我们</el-link>
       </el-col>
       <el-col :span="2">
-        <el-link href="404" class="footer-link">服务条款</el-link>
+        <el-link href="service" class="footer-link">服务条款</el-link>
       </el-col>
       <el-col :span="2">
-        <el-link href="404" class="footer-link">隐私政策</el-link>
+        <el-link href="privacy" class="footer-link">隐私政策</el-link>
       </el-col>
     </el-row>
 

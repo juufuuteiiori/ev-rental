@@ -3,6 +3,8 @@
 #include <database/database.h>
 #include <server/utils/utils.h>
 
+#include <regex>
+
 crow::response getVehicleList(const crow::request& req) {
     crow::json::wvalue result;
     crow::response response;
@@ -86,6 +88,14 @@ crow::response submitVehicle(const crow::request& req) {
     int model_id = body["model_id"].i();
     std::string status = body["status"].s();
     std::string license_plate = body["license_plate"].s();
+    std::regex new_energy_plate(R"(^[A-HJ-NP-Z][A-HJ-NP-Z0-9]{6}$)");
+
+    if (license_plate.substr(0, 3) != "川" ||
+        std::regex_match(license_plate.substr(3, license_plate.size() - 3), new_energy_plate) ==
+            false) {
+        result["msg"] = "车牌号不符合逻辑";
+        return crow::response(400, result);
+    }
 
     // 连接数据库
     auto conn = getDatabaseConnection();
@@ -123,8 +133,54 @@ crow::response updateVehicle(const crow::request& req) {
 
     auto jwt_role = jwt_result->second;
     if (jwt_role != "管理员") {
-        result["msg"] = "非管理员无法上传品牌";
+        result["msg"] = "非管理员无法修改车辆状态";
         return crow::response(401, result);
+    }
+
+    auto body = crow::json::load(req.body);
+    if (!body || !body.has("vehicle_id") || body["vehicle_id"].t() != crow::json::type::Number ||
+        !body.has("status") || body["status"].t() != crow::json::type::String) {
+        result["msg"] = "表单信息错误";
+        return crow::response(400, result);
+    }
+
+    auto vehicle_id = body["vehicle_id"].i();
+    std::string status = body["status"].s();
+
+    if (status != "可用" && status != "不可用") {
+        result["msg"] = "表单错误";
+        return crow::response(400, result);
+    }
+
+    // 连接数据库
+    auto conn = getDatabaseConnection();
+    if (!conn) {
+        result["msg"] = "数据库连接失败";
+        return crow::response(500, result);
+    }
+
+    std::string query = "SELECT * FROM vehicles WHERE vehicle_id = " + std::to_string(vehicle_id) +
+                        " AND status = '" + status + "'";
+
+    if (mysql_query(conn.get(), query.c_str()) != 0) {
+        result["msg"] = "查询语句错误";
+        return crow::response(500, result);
+    }
+
+    std::shared_ptr<MYSQL_RES> queryRes(mysql_store_result(conn.get()), mysql_free_result);
+    if (!queryRes || mysql_num_rows(queryRes.get()) == 0) {
+        result["msg"] = "数据不存在";
+        return crow::response(409, result);
+    }
+
+    status = status == "可用" ? "不可用" : "可用";
+
+    std::string update_query = "UPDATE vehicles SET status = '" + status +
+                               "' WHERE vehicle_id = " + std::to_string(vehicle_id);
+
+    if (mysql_query(conn.get(), update_query.c_str()) != 0) {
+        result["msg"] = "修改语句错误";
+        return crow::response(500, result);
     }
 
     result["msg"] = "修改成功";
@@ -142,10 +198,10 @@ crow::response delVehicle(const crow::request& req) {
 
     auto jwt_role = jwt_result->second;
     if (jwt_role != "管理员") {
-        result["msg"] = "非管理员无法上传品牌";
+        result["msg"] = "非管理员无法删除车辆";
         return crow::response(401, result);
     }
 
-    result["msg"] = "删除成功";
+    result["msg"] = "未实现删除车辆功能";
     return crow::response(200, result);
 }

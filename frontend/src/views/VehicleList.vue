@@ -2,8 +2,8 @@
   <div class="vehicle-list">
     <!--  搜索 & 筛选区域 -->
     <el-card class="filter-bar">
-      <el-row :gutter="30">
-        <el-col :span="4">
+      <el-row :gutter="16">
+        <el-col :span="6">
           <el-select
             v-model="filters.brand"
             placeholder="选择品牌"
@@ -19,7 +19,7 @@
           </el-select>
         </el-col>
 
-        <el-col :span="4">
+        <el-col :span="6">
           <el-input
             v-model="filters.keyword"
             placeholder="请输入车型或车牌关键词"
@@ -29,7 +29,7 @@
           </el-input>
         </el-col>
 
-        <el-col :span="4">
+        <el-col :span="6">
           <el-select
             v-model="filters.status"
             placeholder="选择车辆状态"
@@ -43,7 +43,7 @@
           </el-select>
         </el-col>
 
-        <el-col :span="2">
+        <el-col :span="6">
           <el-button @click="openAddDialog">添加车辆</el-button>
         </el-col>
 
@@ -92,7 +92,7 @@
       ></el-table-column>
       <el-table-column
         prop="status"
-        label="状态"
+        label="状态（点击修改）"
         :flex-grow="1"
         align="center"
         header-align="center"
@@ -123,6 +123,7 @@
       :visible.sync="addDialogVisible"
       width="50%"
       :modal="true"
+      class="vehicle-add-dialog"
     >
       <div class="vehicle-form">
         <el-form
@@ -186,6 +187,11 @@
         </el-form>
       </div>
 
+      <!-- 添加提示信息 -->
+      <el-form>
+        <p>⚠️ 此操作不可逆！ 车型与车牌号不可修改、删除！ 请谨慎操作！</p>
+      </el-form>
+
       <span slot="footer">
         <!-- 提交按钮 -->
         <el-button type="primary" @click="submitVehicle"
@@ -199,12 +205,18 @@
 
     <el-dialog
       title="修改车辆"
-      :visible.sync="updateDelDialogVisble"
+      :visible.sync="updateDialogVisble"
       width="50%"
       :modal="true"
+      class="vehicle-update-dialog"
     >
+      <!-- 修改提示信息 -->
+      <el-form label-width="20%">
+        <p>⚠️ 请谨慎操作！</p>
+      </el-form>
+
       <span slot="footer">
-        <el-button type="primary" @click="updateVehicle">
+        <el-button type="danger" @click="updateVehicle">
           {{
             selectedVehicle && selectedVehicle.status === "可用"
               ? "修改为不可用"
@@ -212,8 +224,7 @@
           }}
         </el-button>
 
-        <el-button type="primary" @click="delVehicle">删除车辆信息</el-button>
-        <el-button type="danger" @click="updateDelDialogVisible = false"
+        <el-button type="default" @click="updateDialogVisble = false"
           >关闭</el-button
         >
       </span>
@@ -235,7 +246,7 @@ export default {
       pageSize: 5,
 
       addDialogVisible: false,
-      updateDelDialogVisble: false,
+      updateDialogVisble: false,
       selectedBrand: "",
       selectedVehicle: null,
 
@@ -265,7 +276,7 @@ export default {
         const response = await api.getVehicleList();
         this.$set(this, "vehicles", response.data.vehicles);
       } catch (error) {
-        this.$message.error();
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -288,7 +299,7 @@ export default {
     },
 
     openUpdateDelDialog(vehicle) {
-      this.updateDelDialogVisble = true;
+      this.updateDialogVisble = true;
       this.selectedVehicle = vehicle;
     },
 
@@ -311,8 +322,8 @@ export default {
       this.$refs.vehicleForm.validate();
       try {
         const response = await api.submitVehicle(this.vehicleData);
-        this.$message.success(response.data.msg);
         this.addDialogVisible = false;
+        this.$message.success(response.data.msg);
       } catch (error) {
         this.$message.error(error.response.data.msg);
       }
@@ -320,19 +331,13 @@ export default {
 
     async updateVehicle() {
       try {
-        const response = await api.updateVehicle(this.selectedVehicle.id);
+        const updateVehicleData = {
+          vehicle_id: this.selectedVehicle.vehicle_id,
+          status: this.selectedVehicle.status,
+        };
+        const response = await api.updateVehicle(updateVehicleData);
+        this.updateDialogVisble = false;
         this.$message.success(response.data.msg);
-        this.updateDelDialogVisible = false;
-      } catch (error) {
-        this.$message.error(error.response.data.msg);
-      }
-    },
-
-    async delVehicle() {
-      try {
-        const response = await api.delVehicle(this.selectedVehicle.id);
-        this.$message.success(response.data.msg);
-        this.updateDelDialogVisible = false;
       } catch (error) {
         this.$message.error(error.response.data.msg);
       }
@@ -395,7 +400,7 @@ export default {
 .filter-bar {
   background-color: #f8f9fa; /* 浅灰色背景 */
   padding: 15px;
-  padding-left: 3vw;
+  padding-left: 15vw;
   border-radius: 12px; /* 圆角 */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
   transition: all 0.3s ease-in-out;
@@ -445,5 +450,29 @@ export default {
 .short-input {
   margin-left: 10%;
   width: 60%;
+}
+
+.vehicle-update-dialog {
+  text-align: center;
+}
+
+.vehicle-update-dialog p {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff4d4f;
+  margin-bottom: 20px;
+}
+
+.vehicle-add-dialog p {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff4d4f;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* 优化按钮布局 */
+.vehicle-update-dialog .el-button {
+  min-width: 120px;
 }
 </style>

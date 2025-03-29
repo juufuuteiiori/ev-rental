@@ -126,9 +126,9 @@ export default {
         this.$store.dispatch("jwt/login", response.data.token);
         this.$store.dispatch("user/fetchUser", response.data.user_id);
         this.$router.push("/");
-        this.$message.success(`${this.isLogin ? "登录" : "注册"}成功`);
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("网络异常，请稍后重试");
+        this.$message.error(error.response.data.msg);
       }
     },
 

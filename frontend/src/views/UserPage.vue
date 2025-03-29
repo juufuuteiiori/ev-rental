@@ -14,16 +14,19 @@
         header-align="center"
       ></el-table-column>
       <el-table-column
+        prop="user_photo"
         label="用户头像"
         :flex-grow="2"
         align="center"
         header-align="center"
       >
-        <el-avatar
-          :size="60"
-          :src="getImageUrl(user_photo)"
-          class="user-avatar"
-        />
+        <template v-slot="scope">
+          <el-avatar
+            :size="60"
+            :src="getImageUrl(scope.row.user_photo)"
+            class="user-avatar"
+          />
+        </template>
       </el-table-column>
 
       <el-table-column
@@ -72,16 +75,14 @@ export default {
         const response = await api.getAllUser();
         this.$set(this, "users", response.data.users);
       } catch (error) {
-        this.$message.error();
+        this.$message.error(error.response.data.msg);
       }
     },
 
     getImageUrl(path) {
-      // 处理 path 为 undefined 或空字符串的情况
       if (path === undefined || path === null) {
         path = ""; // 赋值空字符串
       }
-
       return `http://localhost:8081/image?path=${encodeURIComponent(path)}`;
     },
 

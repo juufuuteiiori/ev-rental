@@ -387,9 +387,9 @@ export default {
           await api.addStar(this.carId);
         }
         this.car.is_star = this.car.is_star === 1 ? 0 : 1; // 反转状态
-        this.$message.success(this.car.is_star === 1 ? "收藏成功" : "取消收藏");
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("网络错误，请稍后再试");
+        this.$message.error(error.response.data.msg);
       } finally {
         this.isLoading = false; // 恢复按钮可点击状态
       }
@@ -411,11 +411,9 @@ export default {
           await api.addRecommend(this.carId);
         }
         this.car.is_recommend = this.car.is_recommend === 1 ? 0 : 1; // 反转状态
-        this.$message.success(
-          this.car.is_recommend === 1 ? "推荐成功" : "取消推荐"
-        );
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("网络错误，请稍后再试");
+        this.$message.error(error.response.data.msg);
       } finally {
         this.isLoading = false; // 恢复按钮可点击状态
       }

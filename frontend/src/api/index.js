@@ -165,9 +165,5 @@ export const api = {
   updateVehicle: (vehicleData) =>
     apiClient.post("/vehicle/update", vehicleData),
 
-  // 删除车辆信息
-  delVehicle: (vehicle_id) =>
-    apiClient.get("/vehicle/del", { params: { vehicle_id } }),
-
   // 其他 API...
 };

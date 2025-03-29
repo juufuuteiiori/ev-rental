@@ -36,11 +36,12 @@ crow::response getOrders(const crow::request& req) {
     // 查询订单信息
     std::string query =
         "SELECT o.order_id, o.order_date, m.brand_name, m.model_name, v.license_plate, "
-        "o.order_type, o.status, o.user_id "
+        "o.order_type, o.status, o.user_id, o.address, o.payment_method "
         "FROM orders o "
         "JOIN vehicles v ON o.vehicle_id = v.vehicle_id "
         "JOIN models m ON v.model_id = m.model_id";
     if (jwt_role == "用户") query += " WHERE o.user_id = " + std::to_string(user_id);
+    query += " ORDER BY o.order_date DESC";
 
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["msg"] = "数据库错误";
@@ -66,6 +67,8 @@ crow::response getOrders(const crow::request& req) {
         order["order_type"] = row[5];
         order["order_status"] = row[6];
         order["user_id"] = std::stoi(row[7]);
+        order["address"] = row[8];
+        order["payment_method"] = row[9];
         orders.push_back(std::move(order));
     }
     result["orders"] = std::move(orders);
@@ -102,7 +105,7 @@ crow::response getOrderById(const crow::request& req) {
     std::string query =
         "SELECT o.user_id, o.order_date, m.brand_name, m.model_name, v.license_plate, "
         "o.order_type, o.end_date, o.total_price, o.status, u.user_name, u.user_phone, o.rating, "
-        "o.review "
+        "o.review, o.address, o.payment_method "
         "FROM orders o "
         "JOIN vehicles v ON o.vehicle_id = v.vehicle_id "
         "JOIN models m ON v.model_id = m.model_id "
@@ -143,6 +146,8 @@ crow::response getOrderById(const crow::request& req) {
     order["user_phone"] = row[10];
     order["rating"] = row[11] ? std::stoi(row[11]) : crow::json::wvalue();
     order["review"] = row[12] ? row[12] : crow::json::wvalue();
+    order["address"] = row[13];
+    order["payment_method"] = row[14];
 
     result["order"] = std::move(order);
 
@@ -186,7 +191,8 @@ crow::response submitOrder(const crow::request& req) {
     auto totalPrice = body["totalPrice"].d();
     auto rentalDuration = body["rentalDuration"].i();
 
-    if (user_id != jwt_user_id) {
+    if (user_id != jwt_user_id ||
+        (paymentMethod != "支付宝" && paymentMethod != "微信支付" && paymentMethod != "银行卡")) {
         result["msg"] = "表单信息错误";
         return crow::response(400, result);
     }
@@ -200,12 +206,9 @@ crow::response submitOrder(const crow::request& req) {
     }
 
     // 防止 SQL 注入
-    char safe_address[512], safe_orderType[128], safe_paymentMethod[128];
-
+    char safe_address[512], safe_orderType[128];
     mysql_real_escape_string(conn.get(), safe_address, address.c_str(), address.length());
     mysql_real_escape_string(conn.get(), safe_orderType, orderType.c_str(), orderType.length());
-    mysql_real_escape_string(conn.get(), safe_paymentMethod, paymentMethod.c_str(),
-                             paymentMethod.length());
 
     // 找到一个可用的电动车
     std::string getVehicleSql =
@@ -232,19 +235,23 @@ crow::response submitOrder(const crow::request& req) {
         result["msg"] = "修改语句错误";
         return crow::response(500, result);
     }
+    std::string updateVehicleBackSql =
+        "UPDATE vehicles SET status = '可用' WHERE vehicle_id = " + std::to_string(vehicle_id);
 
     // 添加一条订单记录
     std::string order_date = getCurrentDate();
     std::string safe_end_date = addMonthsToDate(order_date, rentalDuration);
     std::string addOrderSql =
         "INSERT INTO orders (user_id, vehicle_id, order_date, order_type, end_date, "
-        "total_price, status) "
+        "total_price, status, address, payment_method) "
         "VALUES (" +
         std::to_string(user_id) + ", " + std::to_string(vehicle_id) + ", '" + order_date + "', '" +
         std::string(safe_orderType) + "', '" + std::string(safe_end_date) + "', " +
-        std::to_string(totalPrice) + ", '进行中')";
+        std::to_string(totalPrice) + ", '进行中', '" + std::string(safe_address) + "', '" +
+        paymentMethod + "')";
 
     if (mysql_query(conn.get(), addOrderSql.c_str()) != 0) {
+        mysql_query(conn.get(), updateVehicleBackSql.c_str());
         result["msg"] = "添加语句错误";
         return crow::response(500, result);
     }
@@ -280,7 +287,7 @@ crow::response orderDone(const crow::request& req) {
 
     // 查询订单信息
     std::string query =
-        "SELECT o.user_id, o.order_type, o.status "
+        "SELECT o.user_id, o.order_type, o.status, o.vehicle_id "
         "FROM orders o "
         "WHERE o.order_id = " +
         std::to_string(order_id);
@@ -311,10 +318,20 @@ crow::response orderDone(const crow::request& req) {
         return crow::response(400, result);
     }
 
-    std::string doneQuery =
+    std::string orderDoneQuery =
         "UPDATE orders SET status = '已完成' WHERE order_id = " + std::to_string(order_id);
 
-    if (mysql_query(conn.get(), doneQuery.c_str()) != 0) {
+    if (mysql_query(conn.get(), orderDoneQuery.c_str()) != 0) {
+        result["msg"] = "数据库执行错误";
+        return crow::response(500, result);
+    }
+
+    auto vehicle_id = std::stoi(row[3]);
+
+    std::string vehicleDoneQuery =
+        "UPDATE vehicles SET status = '可用' WHERE vehicle_id = " + std::to_string(vehicle_id);
+
+    if (mysql_query(conn.get(), vehicleDoneQuery.c_str()) != 0) {
         result["msg"] = "数据库执行错误";
         return crow::response(500, result);
     }

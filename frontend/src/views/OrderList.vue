@@ -9,7 +9,7 @@
     <!-- 用户已登录，显示订单表格 -->
     <div v-else>
       <el-card class="filter-bar">
-        <el-row :gutter="20">
+        <el-row :gutter="40">
           <el-col :span="6">
             <el-date-picker
               v-model="filters.dateRange"
@@ -24,10 +24,10 @@
             />
           </el-col>
 
-          <el-col :span="4">
+          <el-col :span="6">
             <el-input
-              v-model="filters.user_id"
-              placeholder="输入用户编号"
+              v-model="filters.keyword"
+              placeholder="输入用户编号或地址"
               clearable
               class="custom-input"
             >
@@ -62,7 +62,7 @@
             </el-select>
           </el-col>
 
-          <el-col :span="5">
+          <el-col :span="4">
             <el-select
               v-model="filters.status"
               placeholder="选择订单状态"
@@ -169,6 +169,12 @@
         >
           {{ selectedOrder.end_date }}
         </el-descriptions-item>
+        <el-descriptions-item label="收货地址">
+          {{ selectedOrder.address }}</el-descriptions-item
+        >
+        <el-descriptions-item label="支付方式">
+          {{ selectedOrder.payment_method }}</el-descriptions-item
+        >
       </el-descriptions>
 
       <div class="comment-container" v-if="commentCheck">
@@ -242,17 +248,7 @@ export default {
     },
 
     orderCheck() {
-      if (this.$store.state.user.userInfo.role === "管理员") {
-        return (
-          this.selectedOrder.order_status === "进行中" &&
-          this.selectedOrder.order_type === "租赁"
-        );
-      } else {
-        return (
-          this.selectedOrder.order_status === "进行中" &&
-          this.selectedOrder.order_type === "购买"
-        );
-      }
+      return this.selectedOrder.order_status === "进行中";
     },
 
     commentCheck() {
@@ -270,8 +266,9 @@ export default {
         )
         .filter(
           (order) =>
-            !this.filters.user_id ||
-            order.user_id === Number(this.filters.user_id)
+            !this.filters.keyword ||
+            order.user_id === Number(this.filters.keyword) ||
+            order.address.includes(this.filters.keyword)
         )
         .filter(
           (order) =>
@@ -317,8 +314,7 @@ export default {
         );
         this.orders = response.data.orders;
       } catch (error) {
-        console.error("获取订单失败", error);
-        this.$message.error("无法加载订单数据");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -330,8 +326,7 @@ export default {
         this.rating = response.data.order.rating;
         this.review = response.data.order.review;
       } catch (error) {
-        console.error("获取订单失败", error);
-        this.$message.error("无法加载订单数据");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -340,10 +335,9 @@ export default {
       try {
         await api.orderDone(this.selectedOrder_id);
         this.fetchOrders();
-        this.$message.success("确认订单成功");
+        this.$message.success(response.data.msg);
       } catch (error) {
-        console.error("确认订单失败", error);
-        this.$message.error("确认订单失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -351,7 +345,7 @@ export default {
       this.dialogVisible = false;
 
       if (!this.rating || !this.review) {
-        this.$message.error("评分和评论不能为空");
+        this.$message.error("评分或评论不能为空");
         return;
       }
 
@@ -362,10 +356,10 @@ export default {
           review: this.review,
         };
 
-        await api.submitComment(commentForm);
-        this.$message.success("修改评价成功");
+        const response = await api.submitComment(commentForm);
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("确认评价失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -439,8 +433,8 @@ export default {
 
 .filter-bar {
   background-color: #f8f9fa; /* 浅灰色背景 */
-  padding: 15px;
-  padding-left: 10vw;
+  padding: 25px 0;
+  padding-left: 3vw;
   border-radius: 12px; /* 圆角 */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
   transition: all 0.3s ease-in-out;
@@ -462,5 +456,29 @@ export default {
 .review-input {
   margin-bottom: 20px;
   resize: none; /* 防止调整输入框大小 */
+}
+
+.custom-select,
+.custom-input {
+  width: 100%;
+  border-radius: 8px; /* 让输入框更圆润 */
+}
+
+/* 选中时的高亮效果 */
+.custom-select :deep(.el-input__inner),
+.custom-input :deep(.el-input__inner) {
+  transition: all 0.3s ease-in-out;
+  border-radius: 8px;
+}
+
+.custom-select :deep(.el-input__inner):hover,
+.custom-input :deep(.el-input__inner):hover {
+  border-color: #409eff; /* Element-UI 主题色 */
+}
+
+.custom-select :deep(.el-input__inner):focus,
+.custom-input :deep(.el-input__inner):focus {
+  border-color: #007bff; /* 选中时颜色更深 */
+  box-shadow: 0 0 8px rgba(64, 158, 255, 0.3);
 }
 </style>

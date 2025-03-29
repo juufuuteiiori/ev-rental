@@ -112,6 +112,7 @@ export default {
       if (this.$route.path !== "/") {
         this.$router.push("/");
       }
+      this.$message.success("退出成功");
     },
 
     getImageUrl(path) {

@@ -101,9 +101,12 @@ export default {
 
     async submitForm() {
       this.dialogVisible = false;
-      const valid = await this.$refs.userForm.validate();
+      const valid = await new Promise((resolve) => {
+        this.$refs.userForm.validate((isValid) => resolve(isValid));
+      });
+
       if (!valid) {
-        console.log("表单验证失败");
+        this.$message.error("表单信息错误");
         return;
       }
 
@@ -116,14 +119,13 @@ export default {
 
       try {
         const response = await api.updateUser(requestData);
-        this.$message.success(response.data.msg);
         this.$store.dispatch(
           "user/fetchUser",
           this.$store.state.user.userInfo.user_id
         );
-        console.log(this.$store.state.user.userInfo);
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error(error.response.msg);
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -143,9 +145,9 @@ export default {
       try {
         const response = await api.postImage(formData); // 调用上传 API
         this.$set(this.form, "user_photo", response.data.file);
-        this.$message.success("图片上传成功！");
+        this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("图片上传失败");
+        this.$message.error(error.response.data.msg);
       }
     },
   },

@@ -4,6 +4,7 @@
 #include <server/utils/utils.h>
 
 #include <bcrypt/BCrypt.hpp>
+#include <regex>
 #include <string>
 
 #include "crow/json.h"
@@ -60,6 +61,7 @@ crow::response registerUser(const crow::request& req) {
     int user_id = mysql_insert_id(conn.get());
     std::string token = generateJWT(user_id, "user");
 
+    result["msg"] = "注册成功";
     result["user_id"] = user_id;
     result["token"] = token;
     return crow::response(200, result);
@@ -211,6 +213,12 @@ crow::response updateUser(const crow::request& req) {
             ? body["user_photo"].s()
             : std::string();
 
+    std::regex phone_regex(R"(^1[3-9]\d{9}$)");
+    if (!user_phone.empty() && std::regex_match(user_phone, phone_regex) == false) {
+        result["msg"] = "手机号码不符合逻辑";
+        return crow::response(400, result);
+    }
+
     // 连接数据库
     auto conn = getDatabaseConnection();
     if (!conn) {
@@ -219,9 +227,8 @@ crow::response updateUser(const crow::request& req) {
     }
 
     // 防止 SQL 注入
-    char safe_name[100], safe_phone[100], safe_password[255];
+    char safe_name[100], safe_password[255];
     mysql_real_escape_string(conn.get(), safe_name, user_name.c_str(), user_name.length());
-    mysql_real_escape_string(conn.get(), safe_phone, user_phone.c_str(), user_phone.length());
     mysql_real_escape_string(conn.get(), safe_password, user_password.c_str(),
                              user_password.length());
 
@@ -241,14 +248,15 @@ crow::response updateUser(const crow::request& req) {
     }
 
     std::string query = "UPDATE users SET user_name = '" + std::string(safe_name) + "'";
-    query += ", user_phone = '" + std::string(safe_phone) + "'";
+    if (user_phone.empty())
+        query += ", user_phone = NULL";
+    else
+        query += ", user_phone = '" + user_phone + "'";
     if (!user_password.empty()) {
         query += ", user_password = '" + std::string(safe_password) + "'";
     }
     query += user_photo.empty() ? ", user_photo = NULL" : ", user_photo = '" + user_photo + "'";
     query += " WHERE user_id = " + std::to_string(user_id);
-
-    std::cout << query << std::endl;
 
     if (mysql_query(conn.get(), query.c_str()) != 0) {
         result["msg"] = "该手机号已注册";

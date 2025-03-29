@@ -235,7 +235,7 @@ export default {
           newComment: { content: "", parent_id: 0 },
         }));
       } catch (error) {
-        this.$message.error("服务器错误");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -279,7 +279,7 @@ export default {
         const response = await api.addComment(newPost);
         this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("发布失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -288,7 +288,7 @@ export default {
         const response = await api.delComment(postId);
         this.$message.success(response.data.msg);
       } catch (error) {
-        this.$message.error("删除失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -314,7 +314,7 @@ export default {
 
         post.is_liked = !post.is_liked;
       } catch (error) {
-        this.$message.error("操作失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -334,7 +334,7 @@ export default {
 
         post.is_disliked = !post.is_disliked;
       } catch (error) {
-        this.$message.error("操作失败");
+        this.$message.error(error.response.data.msg);
       }
     },
 
@@ -346,7 +346,7 @@ export default {
           this.$set(post, "comments", response.data.comments);
         }
       } catch (error) {
-        this.$message.error("服务器错误");
+        this.$message.error(error.response.data.msg);
       }
     },
 
