@@ -333,7 +333,7 @@ export default {
     async orderDone() {
       this.dialogVisible = false;
       try {
-        await api.orderDone(this.selectedOrder_id);
+        const response = await api.orderDone(this.selectedOrder_id);
         this.fetchOrders();
         this.$message.success(response.data.msg);
       } catch (error) {

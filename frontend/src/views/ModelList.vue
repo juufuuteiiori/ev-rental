@@ -12,8 +12,8 @@
             </h3>
 
             <p>续航：{{ car.range }} km</p>
-            <p>销售价格：¥ {{ car.salePrice }} 起</p>
-            <p>租赁价格: ¥ {{ car.rentalPrice }} / 月起</p>
+            <p>销售价格：¥ {{ car.salePrice }}</p>
+            <p>租赁价格: ¥ {{ car.rentalPrice }} / 天</p>
           </div>
         </div>
       </el-carousel-item>
@@ -68,9 +68,9 @@
             clearable
             class="custom-select"
           >
-            <el-option label="3000以下" value="0-3000"></el-option>
-            <el-option label="3000-4000" value="3000-4000"></el-option>
-            <el-option label="4000以上" value="4000-10000000"></el-option>
+            <el-option label="100以下" value="0-100"></el-option>
+            <el-option label="100-150" value="100-150"></el-option>
+            <el-option label="150以上" value="150-10000000"></el-option>
           </el-select>
         </el-col>
 
@@ -131,7 +131,7 @@
 
         <el-table-column
           prop="rentalPrice"
-          label="租赁价格（元/月）"
+          label="租赁价格（元/天）"
           :flex-grow="1.5"
           align="center"
           header-align="center"

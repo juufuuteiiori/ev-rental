@@ -240,7 +240,8 @@ crow::response submitOrder(const crow::request& req) {
 
     // 添加一条订单记录
     std::string order_date = getCurrentDate();
-    std::string safe_end_date = addMonthsToDate(order_date, rentalDuration);
+    // std::string safe_end_date = addMonthsToDate(order_date, rentalDuration);
+    std::string safe_end_date = addDaysToDate(order_date, rentalDuration);
     std::string addOrderSql =
         "INSERT INTO orders (user_id, vehicle_id, order_date, order_type, end_date, "
         "total_price, status, address, payment_method) "

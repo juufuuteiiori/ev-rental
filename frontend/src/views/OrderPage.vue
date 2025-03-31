@@ -4,7 +4,7 @@
       <img :src="getImageUrl(car.image_paths[0])" class="car-image" />
       <h3>{{ car.brand_name }} {{ car.model_name }}</h3>
       <p>购买： ¥ {{ car.purchase_price }}</p>
-      <p>租赁： ¥ {{ car.leasing_price }} / 月</p>
+      <p>租赁： ¥ {{ car.leasing_price }} / 天</p>
     </el-card>
 
     <div class="order-right">
@@ -14,7 +14,7 @@
           :model="formData"
           :rules="rules"
           label-position="left"
-          label-width="100px"
+          label-width="120px"
         >
           <h3 class="order-title">订单信息</h3>
 
@@ -26,11 +26,11 @@
           </el-form-item>
 
           <el-form-item
-            label="租赁时长"
+            label="租赁时长(天)"
             prop="rentalDuration"
             v-if="formData.orderType === '租赁'"
           >
-            <el-select
+            <!-- <el-select
               v-model="formData.rentalDuration"
               placeholder="选择租赁时长"
               style="width: 300px"
@@ -39,7 +39,14 @@
               <el-option label="3 个月" :value="3" />
               <el-option label="6 个月" :value="6" />
               <el-option label="12 个月" :value="12" />
-            </el-select>
+            </el-select> -->
+            <el-input
+              v-model.number="formData.rentalDuration"
+              placeholder="选择租赁时长"
+              style="width: 300px"
+              type="number"
+              @input="handleInput"
+            />
           </el-form-item>
 
           <el-form-item label="收货地址" prop="address">
@@ -57,7 +64,7 @@
               style="width: 300px"
             >
               <el-option label="支付宝" value="支付宝" />
-              <el-option label="微信" value="微信" />
+              <el-option label="微信支付" value="微信支付" />
               <el-option label="银行卡" value="银行卡" />
             </el-select>
           </el-form-item>
@@ -79,10 +86,9 @@
             <p v-if="formData.orderType === '购买'">
               车辆价格：¥ {{ car.purchase_price }}
             </p>
-            <p v-if="formData.orderType === 'rent'">
-              租赁时长：{{ formData.rentalDuration }} 个月
+            <p v-if="formData.orderType === '租赁'">
+              租赁时长：{{ formData.rentalDuration }} 天
             </p>
-            <!-- <p>保险费用：{{ formData.insurance ? "¥ 2000" : "¥ 0" }}</p> -->
             <p>总金额：¥ {{ totalPrice }}</p>
           </div>
 
@@ -204,6 +210,14 @@ export default {
       } catch (error) {
         this.$message.error(error.response.data.msg);
       }
+    },
+
+    handleInput(value) {
+      // 只允许输入正整数
+      this.formData.rentalDuration = Math.max(
+        1,
+        Math.floor(Number(value) || 0)
+      );
     },
   },
   mounted() {

@@ -59,7 +59,7 @@ crow::response registerUser(const crow::request& req) {
     }
 
     int user_id = mysql_insert_id(conn.get());
-    std::string token = generateJWT(user_id, "user");
+    std::string token = generateJWT(user_id, "用户");
 
     result["msg"] = "注册成功";
     result["user_id"] = user_id;

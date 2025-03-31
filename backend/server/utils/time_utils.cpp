@@ -30,6 +30,21 @@ std::string addMonthsToDate(const std::string& date_str, int months) {
     return oss.str();
 }
 
+// 将日期加上指定的天数
+std::string addDaysToDate(const std::string& date_str, int days) {
+    std::tm tm_date = {};
+    std::istringstream ss(date_str);
+    ss >> std::get_time(&tm_date, "%Y-%m-%d");
+
+    // 将天数加到日期上
+    tm_date.tm_mday += days;
+    mktime(&tm_date);  // 标准化日期
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm_date, "%Y-%m-%d");
+    return oss.str();
+}
+
 // 计算天数差 date_str "YYYY-MM-DD" （字符串中有引号）
 int getDiffDay(const std::string& date_str) {
     // 获取当前时间

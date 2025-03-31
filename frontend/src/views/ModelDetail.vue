@@ -46,7 +46,7 @@
           </p>
           <p>
             <strong>租赁价格：</strong>
-            <span class="price">¥ {{ car.leasing_price }} / 月</span>
+            <span class="price">¥ {{ car.leasing_price }} / 天</span>
           </p>
           <p><strong>充电峰值功率：</strong> {{ car.peak_power }} kW</p>
           <p><strong>加速（百公里）：</strong> {{ car.acceleration }} s</p>
@@ -68,7 +68,7 @@
             margin-bottom: 30px;
           "
         >
-          <h3>车辆性能分析与对比</h3>
+          <h3>车辆性能对比</h3>
           <el-select
             v-model="compareCarId"
             placeholder="请选择对比车辆"
@@ -87,7 +87,7 @@
       </el-card>
 
       <el-card class="chart-card">
-        <h3>价格趋势分析</h3>
+        <h3>价格趋势</h3>
         <div ref="lineChart" class="chart"></div>
       </el-card>
     </div>
@@ -381,11 +381,9 @@ export default {
       this.isLoading = true;
 
       try {
-        if (this.car.is_star) {
-          await api.delStar(this.carId);
-        } else {
-          await api.addStar(this.carId);
-        }
+        const response = this.car.is_star
+          ? await api.delStar(this.carId)
+          : await api.addStar(this.carId);
         this.car.is_star = this.car.is_star === 1 ? 0 : 1; // 反转状态
         this.$message.success(response.data.msg);
       } catch (error) {
@@ -403,13 +401,10 @@ export default {
 
       if (this.isLoading) return; // 防止重复点击
       this.isLoading = true;
-
       try {
-        if (this.car.is_recommend) {
-          await api.delRecommend(this.carId);
-        } else {
-          await api.addRecommend(this.carId);
-        }
+        const response = this.car.is_recommend
+          ? await api.delRecommend(this.carId)
+          : await api.addRecommend(this.carId);
         this.car.is_recommend = this.car.is_recommend === 1 ? 0 : 1; // 反转状态
         this.$message.success(response.data.msg);
       } catch (error) {
