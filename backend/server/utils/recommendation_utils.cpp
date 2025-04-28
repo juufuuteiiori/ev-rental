@@ -31,9 +31,9 @@ double computeVehicleScore(crow::json::wvalue& vehicle) {
     double score = 0;
 
     score += std::sqrt(std::stoi(vehicle["range"].dump())) * 0.05;  // 续航
-    score -= std::log(std::stod(vehicle["rentalPrice"].dump()) + 1) * 0.02;  // 租赁价格（越低越好）
-    score -= std::log(std::stod(vehicle["salePrice"].dump()) + 1) * 0.002;  // 购买价格（越低越好）
-    score += std::stoi(vehicle["peak_power"].dump()) * 0.05;                // 充电速度
+    score -= std::log(std::stod(vehicle["rentalPrice"].dump()) + 1) * 0.05;  // 租赁价格（越低越好）
+    score -= std::log(std::stod(vehicle["salePrice"].dump()) + 1) * 0.02;  // 购买价格（越低越好）
+    score += std::stoi(vehicle["peak_power"].dump()) * 0.05;               // 充电速度
     score -=
         std::pow(std::stod(vehicle["acceleration"].dump()), 1.5) * 0.8;  // 加速时间（越小越好）
     score += std::stoi(vehicle["seat_count"].dump()) * 0.5;              // 座位数

@@ -25,12 +25,12 @@ CREATE TABLE IF NOT EXISTS models (
     model_name VARCHAR(100) NOT NULL,                          -- 型号名称
     power_type ENUM('电动', '混动') NOT NULL,                   -- 动力类型
     max_range INT,                                             -- 最大续航里程（单位：公里）
-    leasing_price DECIMAL(10, 2) NOT NULL,                     -- 租赁价格（每月，单位：元）
+    leasing_price DECIMAL(10, 2) NOT NULL,                     -- 租赁价格（每天，单位：元）
     purchase_price DECIMAL(10, 2) NOT NULL,                    -- 购买价格（单位：元）
-    peak_power DECIMAL(5, 2),                                  -- 充电峰值功率（单位：kW）
-    acceleration DECIMAL(5, 2),                                -- 加速度（百公里，单位：秒）
-    seat_count INT,                                            -- 座位数
-    storage_space INT,                                         -- 储物空间（单位：升）
+    peak_power DECIMAL(5, 2) NOT NULL,                         -- 充电峰值功率（单位：kW）
+    acceleration DECIMAL(5, 2) NOT NULL,                       -- 加速度（百公里，单位：秒）
+    seat_count INT NOT NULL,                                   -- 座位数
+    storage_space INT NOT NULL,                                -- 储物空间（单位：升）
     image_paths TEXT,                                          -- 图片路径（多张图片，用逗号分隔）
     recommend BOOLEAN NOT NULL DEFAULT FALSE                   -- 是否为推荐车辆
 );

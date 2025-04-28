@@ -21,7 +21,7 @@ const routes = [
     component: HomeView,
   },
   {
-    path: "*",
+    path: "/404",
     name: "ErrorPage",
     component: ErrorPage,
   },
@@ -31,12 +31,12 @@ const routes = [
     component: LogIn,
   },
   {
-    path: "/Models",
+    path: "/models",
     name: "ModelList",
     component: ModelList,
   },
   {
-    path: "/Model/:id",
+    path: "/model/:id",
     name: "ModelDetail",
     component: ModelDetail,
   },
@@ -62,7 +62,7 @@ const routes = [
   },
   {
     path: "/users",
-    name: "users",
+    name: "UserPage",
     component: UserPage,
   },
 ]; // 定义路由规则
@@ -86,6 +86,15 @@ router.beforeEach((to, from, next) => {
     next("/404"); // 跳转到 404
   } else {
     next(); // 允许访问其他路由
+  }
+});
+
+router.beforeEach((to, from, next) => {
+  const matched = router.getMatchedComponents(to);
+  if (matched.length === 0) {
+    next("/404");
+  } else {
+    next();
   }
 });
 

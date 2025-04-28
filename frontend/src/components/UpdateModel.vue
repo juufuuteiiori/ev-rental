@@ -96,7 +96,7 @@
         </el-form-item>
 
         <!-- 租赁价格 -->
-        <el-form-item label="租赁价格 (元/月)" prop="rental_price">
+        <el-form-item label="租赁价格 (元/天)" prop="rental_price">
           <el-input
             v-model.number="modelData.rental_price"
             placeholder="请输入租赁价格"

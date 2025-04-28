@@ -2,24 +2,24 @@
 
 ## 前端
 
-项目中使用的 Vue 版本为 2.7.16，详细信息如下：
+进入 `frontend` 文件夹，使用 `npm run build` 生成静态文件。
 
-```cmd
-frontend@0.1.0 /home/iori/ev-rental/frontend
-├─┬ @vue/cli-plugin-babel@5.0.8
-│ └─┬ @vue/babel-preset-app@5.0.8
-│ ├─┬ @vue/babel-preset-jsx@1.4.0
-│ │ └── vue@2.7.16 deduped
-│ └── vue@2.7.16 deduped
-├─┬ element-ui@2.15.14
-│ └── vue@2.7.16 deduped
-├── vue@2.7.16
-└─┬ vuex@3.6.2
-└── vue@2.7.16 deduped
-```
+使用 `node server.js` 启动前端。
 
 ## 后端
 
-cmake version 3.22.1
+进入 `backend` 文件夹，新建 `build` 文件夹并使用 CMake 完成代码编译。
+
+进入 `build` 文件夹，使用 `./server` 启动后端。
+
+在第一次运行时，使用 `./server -i` 初始化数据库。数据库文件位于 `backend/database/database.sql`。
 
 ## 数据库
+
+新建空的 `ev_rental_database` 数据库。
+
+相关配置请修改 `backend/database/config.json`
+
+## NLP 服务器
+
+进入 `nlpserver` 文件夹，使用 `python3 app.py` 启动 NLP 服务器
